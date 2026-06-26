@@ -1,0 +1,58 @@
+<div class="page">
+  <header class="page-hero animate-fade-up">
+    <div>
+      <h1>{{ 'ai.title' | t }}</h1>
+      <p>Health Risk Engine — scores prédictifs & recommandations cliniques</p>
+    </div>
+    <span class="hero-badge">
+      <app-icon name="ai" [size]="16" />
+      {{ 'ai.risk' | t }}
+    </span>
+  </header>
+
+  @if (isStaff() && patients().length) {
+    <div class="patient-picker animate-fade-up">
+      <label>
+        Patient
+        <select [ngModel]="selectedPatientId()" (ngModelChange)="onPatientChange($event)">
+          @for (p of patients(); track p.id) {
+            <option [value]="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+          }
+        </select>
+      </label>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">{{ error() }}</div>
+  } @else if (assessments().length === 0) {
+    <div class="empty-state">
+      <app-icon name="ai" [size]="48" />
+      <p>Aucune évaluation IA pour ce patient</p>
+    </div>
+  } @else {
+    <div class="risk-grid">
+      @for (a of assessments(); track a.id; let i = $index) {
+        <article class="risk-card animate-fade-up" [style.animation-delay]="i * 0.05 + 's'">
+          <div class="risk-score" [class]="'level-' + a.riskLevel">{{ a.riskScore }}</div>
+          <div class="risk-body">
+            <div class="risk-head">
+              <span [class]="levelClass(a.riskLevel)">{{ a.riskLevel }}</span>
+              <time>{{ a.assessedAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+            </div>
+            <p class="factors">{{ (a.factors || []).join(' · ') }}</p>
+            <p class="reco"><strong>{{ 'ai.recommendation' | t }} :</strong> {{ a.recommendation }}</p>
+            @if (a.triggerEventType) {
+              <span class="trigger">{{ a.triggerEventType }}</span>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

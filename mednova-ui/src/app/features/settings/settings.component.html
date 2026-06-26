@@ -1,0 +1,182 @@
+<div class="settings-page">
+  <header class="page-hero animate-fade-up">
+    <div>
+      <h1>Paramètres</h1>
+      <p>Préférences personnelles, thème, session et administration système</p>
+    </div>
+    <span class="hero-badge">
+      <app-icon name="settings" [size]="16" />
+      Configuration
+    </span>
+  </header>
+
+  @if (saved()) {
+    <div class="toast-success animate-fade-up">
+      <app-icon name="check" [size]="16" />
+      Paramètres enregistrés
+    </div>
+  }
+
+  <div class="settings-grid">
+    <section class="settings-card animate-fade-up">
+      <h2><app-icon name="user" [size]="18" /> Profil</h2>
+      @if (authService.currentUser(); as user) {
+        <div class="profile-row">
+          <div class="avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
+          <div>
+            <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+            <p>{{ user.email }}</p>
+            <div class="badges">
+              @for (role of user.roles; track role) {
+                <span class="badge-info">{{ role.replace('ROLE_', '') }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        <p class="meta">
+          2FA :
+          @if (twoFactorEnabled() === null) {
+            <span>Vérification…</span>
+          } @else if (twoFactorEnabled()) {
+            <span class="badge-success">Activée</span>
+          } @else {
+            <span class="badge-neutral">Désactivée</span>
+          }
+        </p>
+      }
+    </section>
+
+    <section class="settings-card animate-fade-up">
+      <h2><app-icon name="palette" [size]="18" /> Apparence</h2>
+      <p class="hint">Thème actif : <strong>{{ resolvedTheme() === 'dark' ? 'Sombre' : 'Clair' }}</strong></p>
+      <div class="theme-options">
+        <button type="button" class="theme-btn" [class.active]="settings.theme === 'light'" (click)="previewTheme('light')">
+          <app-icon name="sun" [size]="20" />
+          Clair
+        </button>
+        <button type="button" class="theme-btn" [class.active]="settings.theme === 'dark'" (click)="previewTheme('dark')">
+          <app-icon name="moon" [size]="20" />
+          Sombre
+        </button>
+        <button type="button" class="theme-btn" [class.active]="settings.theme === 'system'" (click)="previewTheme('system')">
+          <app-icon name="monitor" [size]="20" />
+          Système
+        </button>
+      </div>
+      <label class="field">
+        <span>Densité d'affichage</span>
+        <select [ngModel]="settings.density" (ngModelChange)="previewDensity($event)">
+          <option value="comfortable">Confortable</option>
+          <option value="compact">Compacte</option>
+        </select>
+      </label>
+      <label class="toggle-row">
+        <span>Animations</span>
+        <input type="checkbox" [(ngModel)]="settings.animationsEnabled" />
+      </label>
+      <label class="toggle-row">
+        <span>Sidebar compacte</span>
+        <input type="checkbox" [(ngModel)]="settings.compactSidebar" (ngModelChange)="settings.density = $event ? 'compact' : 'comfortable'" />
+      </label>
+      <label class="field">
+        <span>Langue</span>
+        <select [ngModel]="settings.language" (ngModelChange)="onLanguageChange($event)">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="settings-card animate-fade-up">
+      <h2><app-icon name="lock" [size]="18" /> Session & sécurité</h2>
+      <label class="toggle-row">
+        <span>Rester connecté</span>
+        <input type="checkbox" [(ngModel)]="settings.staySignedIn" />
+      </label>
+      <label class="toggle-row">
+        <span>Mémoriser l'email à la connexion</span>
+        <input type="checkbox" [(ngModel)]="settings.rememberEmail" />
+      </label>
+      <button type="button" class="btn-danger-outline" (click)="logout()">
+        <app-icon name="logout" [size]="16" />
+        Déconnexion
+      </button>
+    </section>
+
+    <section class="settings-card animate-fade-up">
+      <h2><app-icon name="notifications" [size]="18" /> Notifications</h2>
+      <label class="toggle-row">
+        <span>Notifications in-app</span>
+        <input type="checkbox" [(ngModel)]="settings.inAppNotifications" />
+      </label>
+      <label class="toggle-row">
+        <span>Notifications email (alertes)</span>
+        <input type="checkbox" [(ngModel)]="settings.emailNotifications" />
+      </label>
+      <a routerLink="/notifications" class="btn-ghost">Ouvrir le centre de notifications</a>
+    </section>
+
+    <section class="settings-card animate-fade-up">
+      <h2><app-icon name="refresh" [size]="18" /> Données & synchronisation</h2>
+      <p class="hint">Compteurs sidebar synchronisés avec l'API en temps réel.</p>
+      <div class="stats-mini">
+        <span>Patients : <strong>{{ navStats.counts().patients }}</strong></span>
+        <span>Médecins : <strong>{{ navStats.counts().doctors }}</strong></span>
+        <span>RDV : <strong>{{ navStats.counts().appointments }}</strong></span>
+        <span>Audit : <strong>{{ navStats.counts().auditEvents }}</strong></span>
+      </div>
+      @if (navStats.lastUpdated(); as updated) {
+        <p class="meta">Dernière sync : {{ updated | date: 'HH:mm:ss' }}</p>
+      }
+      <button type="button" class="btn-primary" (click)="refreshStats()" [disabled]="navStats.loading()">
+        <app-icon name="refresh" [size]="16" />
+        {{ navStats.loading() ? 'Synchronisation…' : 'Rafraîchir les compteurs' }}
+      </button>
+    </section>
+
+    @if (isAdmin()) {
+      <section class="settings-card admin-card animate-fade-up">
+        <h2><app-icon name="shield" [size]="18" /> Administration système</h2>
+        <p class="hint">Espace réservé à l'administrateur — supervision globale de la plateforme.</p>
+        <div class="admin-grid">
+          <div class="admin-item">
+            <span>API Gateway</span>
+            @if (checking()) {
+              <em>Vérification…</em>
+            } @else {
+              <span [class]="gatewayStatus() === 'UP' ? 'badge-success' : 'badge-danger'">
+                {{ gatewayStatus() ?? '—' }}
+              </span>
+            }
+            <button type="button" class="btn-ghost" (click)="checkGatewayHealth()">Re-vérifier</button>
+          </div>
+          <div class="admin-item">
+            <span>Documentation API</span>
+            <button type="button" class="btn-ghost" (click)="openSwagger()">Ouvrir Swagger</button>
+          </div>
+          <div class="admin-item">
+            <span>Gestion patients</span>
+            <a routerLink="/patients" class="btn-ghost">Voir les dossiers</a>
+          </div>
+          <div class="admin-item">
+            <span>Gestion médecins</span>
+            <a routerLink="/doctors" class="btn-ghost">Voir le corps médical</a>
+          </div>
+          <div class="admin-item">
+            <span>Journal d'audit</span>
+            <a routerLink="/audit" class="btn-ghost">Consulter l'audit</a>
+          </div>
+          <div class="admin-item">
+            <span>Notifications</span>
+            <a routerLink="/notifications" class="btn-ghost">Centre d'alertes</a>
+          </div>
+        </div>
+      </section>
+    }
+  </div>
+
+  <div class="actions-bar animate-fade-up">
+    <button type="button" class="btn-secondary" (click)="reset()">Réinitialiser</button>
+    <button type="button" class="btn-primary" (click)="save()">Enregistrer les paramètres</button>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+<div class="page">
+  <header class="page-hero animate-fade-up">
+    <div>
+      <h1>Patients</h1>
+      <p>{{ filtered().length }} dossier(s) médical(aux) — suivi clinique & allergies</p>
+    </div>
+    <span class="hero-badge">
+      <app-icon name="patients" [size]="16" />
+      Dossiers
+    </span>
+  </header>
+
+  <div class="search-bar animate-fade-up">
+    <app-icon name="search" [size]="18" />
+    <input type="search" placeholder="Rechercher un patient…" [value]="search()" (input)="search.set($any($event.target).value)" />
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des dossiers patients…</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">{{ error() }}</div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <app-icon name="patients" [size]="48" />
+      <p>Aucun patient trouvé</p>
+    </div>
+  } @else {
+    <div class="entity-grid">
+      @for (p of filtered(); track p.id; let i = $index) {
+        <article class="entity-card" [style.animation-delay]="i * 0.05 + 's'">
+          <div class="entity-avatar" [style.background]="avatarColor(p.firstName)">
+            {{ p.firstName.charAt(0) }}{{ p.lastName.charAt(0) }}
+          </div>
+          <h3 class="entity-name">{{ p.firstName }} {{ p.lastName }}</h3>
+          <p class="entity-meta"><app-icon name="mail" [size]="14" /> {{ p.email }}</p>
+          @if (p.phone) {
+            <p class="entity-meta"><app-icon name="phone" [size]="14" /> {{ p.phone }}</p>
+          }
+          <div class="entity-badges">
+            @if (p.bloodType) {
+              <span class="badge-danger"><app-icon name="droplet" [size]="12" /> {{ bloodLabel(p.bloodType) }}</span>
+            }
+            @if (p.gender) {
+              <span class="badge-neutral"><app-icon name="gender" [size]="12" /> {{ p.gender === 'M' ? 'Homme' : 'Femme' }}</span>
+            }
+            <span class="badge-success">Actif</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

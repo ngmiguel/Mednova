@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MAVEN_OPTS: -XX:+TieredCompilation -XX:TieredStopAtLevel=1
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  build-and-test:
+    name: Build & unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Make test scripts executable
+        run: chmod +x scripts/test/*.sh
+
+      - name: Run full test suite
+        run: ./scripts/test/run-all.sh
+
+  frontend:
+    name: Build Angular UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: mednova-ui
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: mednova-ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production bundle
+        run: npm run build -- --configuration production
+
+      - name: Run unit tests
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+  docker-smoke:
+    name: Docker build smoke test
+    needs: [build-and-test, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare environment file
+        run: cp .env.example .env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build application images
+        run: |
+          docker compose build --parallel \
+            auth-service \
+            patient-service \
+            doctor-service \
+            appointment-service \
+            monitoring-service \
+            ai-prediction-service \
+            notification-service \
+            audit-service \
+            messaging-service \
+            api-gateway \
+            mednova-ui
+
+      - name: Verify built images
+        run: |
+          docker compose images --format json \
+            auth-service patient-service doctor-service appointment-service \
+            monitoring-service ai-prediction-service notification-service \
+            audit-service messaging-service api-gateway mednova-ui
+          echo "All application Docker images built successfully."

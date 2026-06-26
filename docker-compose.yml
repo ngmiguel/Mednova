@@ -1,0 +1,388 @@
+# =============================================================================
+# MedNova AI — Stack complète (infra + microservices + UI)
+#
+# Usage :
+#   docker compose up --build -d
+#   docker compose down
+#   docker compose down -v          # supprime les volumes (reset données)
+# =============================================================================
+
+x-common-env: &common-env
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: ${POSTGRES_USER:-mednova}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mednova_secret}
+  JWT_SECRET: ${JWT_SECRET:-change-me-in-production-use-a-long-random-secret-key-at-least-32-chars}
+
+x-kafka-env: &kafka-env
+  KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+
+x-mail-env: &mail-env
+  MAIL_ENABLED: ${MAIL_ENABLED:-false}
+  MAIL_HOST: ${MAIL_HOST:-}
+  MAIL_PORT: ${MAIL_PORT:-587}
+  MAIL_USERNAME: ${MAIL_USERNAME:-}
+  MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+  MAIL_FROM: ${MAIL_FROM:-MedNova AI <noreply@mednova.ai>}
+  MAIL_STARTTLS: ${MAIL_STARTTLS:-true}
+  SPRING_MAIL_HOST: ${MAIL_HOST:-}
+  SPRING_MAIL_PORT: ${MAIL_PORT:-587}
+  SPRING_MAIL_USERNAME: ${MAIL_USERNAME:-}
+  SPRING_MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: mednova-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mednova}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mednova_secret}
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - mednova-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mednova}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: mednova-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mednova-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: mednova-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+    networks:
+      - mednova-network
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc localhost 2181 | grep -q Mode"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: mednova-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - mednova-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ---------------------------------------------------------------------------
+  # Microservices (Dockerfile par module — contexte = racine du dépôt)
+  # ---------------------------------------------------------------------------
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    container_name: mednova-auth
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      <<: [*common-env, *mail-env]
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mednova-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+  patient-service:
+    build:
+      context: .
+      dockerfile: patient-service/Dockerfile
+    container_name: mednova-patient
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      <<: [*common-env, *kafka-env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  doctor-service:
+    build:
+      context: .
+      dockerfile: doctor-service/Dockerfile
+    container_name: mednova-doctor
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      <<: *common-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  appointment-service:
+    build:
+      context: .
+      dockerfile: appointment-service/Dockerfile
+    container_name: mednova-appointment
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      <<: [*common-env, *kafka-env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  monitoring-service:
+    build:
+      context: .
+      dockerfile: monitoring-service/Dockerfile
+    container_name: mednova-monitoring
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      <<: [*common-env, *kafka-env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  ai-prediction-service:
+    build:
+      context: .
+      dockerfile: ai-prediction-service/Dockerfile
+    container_name: mednova-ai
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      <<: [*common-env, *kafka-env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    container_name: mednova-notification
+    restart: unless-stopped
+    ports:
+      - "8087:8087"
+    environment:
+      <<: [*common-env, *kafka-env, *mail-env]
+      MAIL_STAFF_ALERT_TO: ${MAIL_STAFF_ALERT_TO:-}
+      MEDNOVA_MAIL_STAFF_ALERT_TO: ${MAIL_STAFF_ALERT_TO:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  audit-service:
+    build:
+      context: .
+      dockerfile: audit-service/Dockerfile
+    container_name: mednova-audit
+    restart: unless-stopped
+    ports:
+      - "8088:8088"
+    environment:
+      <<: [*common-env, *kafka-env]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  messaging-service:
+    build:
+      context: .
+      dockerfile: messaging-service/Dockerfile
+    container_name: mednova-messaging
+    restart: unless-stopped
+    ports:
+      - "8089:8089"
+    environment:
+      <<: *common-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - mednova-network
+
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    container_name: mednova-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-use-a-long-random-secret-key-at-least-32-chars}
+      MEDNOVA_SERVICES_AUTH_URI: http://auth-service:8081
+      MEDNOVA_SERVICES_PATIENT_URI: http://patient-service:8082
+      MEDNOVA_SERVICES_DOCTOR_URI: http://doctor-service:8083
+      MEDNOVA_SERVICES_APPOINTMENT_URI: http://appointment-service:8084
+      MEDNOVA_SERVICES_MONITORING_URI: http://monitoring-service:8085
+      MEDNOVA_SERVICES_MONITORING_WS_URI: ws://monitoring-service:8085
+      MEDNOVA_SERVICES_AI_URI: http://ai-prediction-service:8086
+      MEDNOVA_SERVICES_NOTIFICATION_URI: http://notification-service:8087
+      MEDNOVA_SERVICES_AUDIT_URI: http://audit-service:8088
+      MEDNOVA_SERVICES_MESSAGING_URI: http://messaging-service:8089
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      patient-service:
+        condition: service_started
+      doctor-service:
+        condition: service_started
+      appointment-service:
+        condition: service_started
+      monitoring-service:
+        condition: service_started
+      ai-prediction-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+      audit-service:
+        condition: service_started
+      messaging-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
+    networks:
+      - mednova-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mednova-ui:
+    build:
+      context: ./mednova-ui
+      dockerfile: Dockerfile
+    container_name: mednova-ui
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+    networks:
+      - mednova-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ | grep -q '<app-root' || wget -qO- http://localhost/ | grep -q 'MedNova'"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  mednova-network:
+    name: mednova-network
+    driver: bridge
+
+volumes:
+  postgres_data:
+    name: mednova-postgres-data
+  redis_data:
+    name: mednova-redis-data
+  zookeeper_data:
+    name: mednova-zookeeper-data
+  zookeeper_log:
+    name: mednova-zookeeper-log
+  kafka_data:
+    name: mednova-kafka-data

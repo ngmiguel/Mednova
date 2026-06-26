@@ -1,0 +1,206 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  autoconfigure:
+    exclude: com.mednova.common.config.CommonLibAutoConfiguration
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      routes:
+        # --- Auth Service ---
+        - id: auth-service
+          uri: ${mednova.services.auth-uri}
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 50
+                key-resolver: "#{@ipKeyResolver}"
+
+        - id: auth-service-openapi
+          uri: ${mednova.services.auth-uri}
+          predicates:
+            - Path=/v3/api-docs/auth
+          filters:
+            - RewritePath=/v3/api-docs/auth, /v3/api-docs
+
+        # --- Patient Service ---
+        - id: patient-service
+          uri: ${mednova.services.patient-uri}
+          predicates:
+            - Path=/api/v1/patients/**
+
+        - id: patient-service-openapi
+          uri: ${mednova.services.patient-uri}
+          predicates:
+            - Path=/v3/api-docs/patient
+          filters:
+            - RewritePath=/v3/api-docs/patient, /v3/api-docs
+
+        # --- Doctor Service ---
+        - id: doctor-service
+          uri: ${mednova.services.doctor-uri}
+          predicates:
+            - Path=/api/v1/doctors/**
+
+        - id: doctor-service-openapi
+          uri: ${mednova.services.doctor-uri}
+          predicates:
+            - Path=/v3/api-docs/doctor
+          filters:
+            - RewritePath=/v3/api-docs/doctor, /v3/api-docs
+
+        # --- Appointment Service ---
+        - id: appointment-service
+          uri: ${mednova.services.appointment-uri}
+          predicates:
+            - Path=/api/v1/appointments/**
+
+        - id: appointment-service-openapi
+          uri: ${mednova.services.appointment-uri}
+          predicates:
+            - Path=/v3/api-docs/appointment
+          filters:
+            - RewritePath=/v3/api-docs/appointment, /v3/api-docs
+
+        # --- Monitoring Service ---
+        - id: monitoring-service
+          uri: ${mednova.services.monitoring-uri}
+          predicates:
+            - Path=/api/v1/monitoring/**
+
+        - id: monitoring-service-openapi
+          uri: ${mednova.services.monitoring-uri}
+          predicates:
+            - Path=/v3/api-docs/monitoring
+          filters:
+            - RewritePath=/v3/api-docs/monitoring, /v3/api-docs
+
+        - id: monitoring-websocket
+          uri: ${mednova.services.monitoring-ws-uri}
+          predicates:
+            - Path=/ws/**
+
+        # --- AI Prediction Service ---
+        - id: ai-prediction-service
+          uri: ${mednova.services.ai-uri}
+          predicates:
+            - Path=/api/v1/ai/**
+
+        - id: ai-prediction-service-openapi
+          uri: ${mednova.services.ai-uri}
+          predicates:
+            - Path=/v3/api-docs/ai
+          filters:
+            - RewritePath=/v3/api-docs/ai, /v3/api-docs
+
+        # --- Notification Service ---
+        - id: notification-service
+          uri: ${mednova.services.notification-uri}
+          predicates:
+            - Path=/api/v1/notifications/**
+
+        - id: notification-service-openapi
+          uri: ${mednova.services.notification-uri}
+          predicates:
+            - Path=/v3/api-docs/notification
+          filters:
+            - RewritePath=/v3/api-docs/notification, /v3/api-docs
+
+        # --- Audit Service ---
+        - id: audit-service
+          uri: ${mednova.services.audit-uri}
+          predicates:
+            - Path=/api/v1/audit/**
+
+        - id: audit-service-openapi
+          uri: ${mednova.services.audit-uri}
+          predicates:
+            - Path=/v3/api-docs/audit
+          filters:
+            - RewritePath=/v3/api-docs/audit, /v3/api-docs
+
+        # --- Messaging Service ---
+        - id: messaging-service
+          uri: ${mednova.services.messaging-uri}
+          predicates:
+            - Path=/api/v1/messaging/**
+
+        - id: messaging-service-openapi
+          uri: ${mednova.services.messaging-uri}
+          predicates:
+            - Path=/v3/api-docs/messaging
+          filters:
+            - RewritePath=/v3/api-docs/messaging, /v3/api-docs
+
+mednova:
+  jwt:
+    secret: ${JWT_SECRET:change-me-in-production-use-a-long-random-secret-key-at-least-32-chars}
+  gateway:
+    public-paths:
+      - /api/v1/auth/register
+      - /api/v1/auth/login
+      - /api/v1/auth/refresh
+      - /api/v1/auth/2fa/verify-login
+      - /api/v1/auth/password/forgot
+      - /api/v1/auth/password/verify-otp
+      - /api/v1/auth/password/reset
+      - /actuator/**
+      - /v3/api-docs/**
+      - /swagger-ui/**
+      - /webjars/**
+  services:
+    auth-uri: http://localhost:8081
+    patient-uri: http://localhost:8082
+    doctor-uri: http://localhost:8083
+    appointment-uri: http://localhost:8084
+    monitoring-uri: http://localhost:8085
+    monitoring-ws-uri: ws://localhost:8085
+    ai-uri: http://localhost:8086
+    notification-uri: http://localhost:8087
+    audit-uri: http://localhost:8088
+    messaging-uri: http://localhost:8089
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs/gateway
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: "Auth Service"
+        url: /v3/api-docs/auth
+      - name: "Patient Service"
+        url: /v3/api-docs/patient
+      - name: "Doctor Service"
+        url: /v3/api-docs/doctor
+      - name: "Appointment Service"
+        url: /v3/api-docs/appointment
+      - name: "Monitoring Service"
+        url: /v3/api-docs/monitoring
+      - name: "Audit Service"
+        url: /v3/api-docs/audit
+      - name: "AI Prediction Service"
+        url: /v3/api-docs/ai
+      - name: "Notification Service"
+        url: /v3/api-docs/notification
+      - name: "Messaging Service"
+        url: /v3/api-docs/messaging
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.mednova.gateway: DEBUG
