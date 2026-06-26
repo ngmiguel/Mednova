@@ -1,0 +1,124 @@
+<div class="page">
+  <header class="page-hero animate-fade-up">
+    <div>
+      <h1>{{ 'appointments.title' | t }}</h1>
+      <p>{{ filtered().length }} consultation(s) — planning médical en temps réel</p>
+    </div>
+    <div class="hero-actions">
+      @if (canBook()) {
+        <button type="button" class="btn-book" (click)="toggleForm()">
+          <app-icon name="plus" [size]="16" />
+          {{ 'appointments.new' | t }}
+        </button>
+      }
+      <span class="hero-badge">
+        <app-icon name="appointments" [size]="16" />
+        Agenda
+      </span>
+    </div>
+  </header>
+
+  @if (showForm()) {
+    <form class="booking-form animate-fade-up" (ngSubmit)="submitBooking()">
+      <h3>{{ 'appointments.book' | t }}</h3>
+      @if (patients().length) {
+        <label>
+          Patient
+          <select [(ngModel)]="form.patientId" name="patientId" required>
+            <option value="">—</option>
+            @for (p of patients(); track p.id) {
+              <option [value]="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+            }
+          </select>
+        </label>
+      } @else if (patientSelfId()) {
+        <p class="patient-self-hint">Réservation pour votre compte patient</p>
+      }
+      <label>
+        Médecin
+        <select [(ngModel)]="form.doctorId" name="doctorId" required>
+          <option value="">—</option>
+          @for (d of doctors(); track d.id) {
+            <option [value]="d.id">Dr. {{ d.firstName }} {{ d.lastName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Date & heure
+        <input type="datetime-local" [(ngModel)]="form.scheduledAt" name="scheduledAt" required />
+      </label>
+      <label>
+        Durée (min)
+        <input type="number" [(ngModel)]="form.durationMinutes" name="durationMinutes" min="15" step="15" />
+      </label>
+      <label>
+        Motif
+        <input type="text" [(ngModel)]="form.reason" name="reason" required />
+      </label>
+      <label>
+        Notes
+        <textarea [(ngModel)]="form.notes" name="notes" rows="2"></textarea>
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn-ghost" (click)="toggleForm()">Annuler</button>
+        <button type="submit" class="btn-primary" [disabled]="saving()">
+          {{ saving() ? ('common.loading' | t) : ('appointments.book' | t) }}
+        </button>
+      </div>
+    </form>
+  }
+
+  <div class="filter-chips">
+    <button type="button" [class.active]="!statusFilter()" (click)="statusFilter.set(null)">{{ 'common.all' | t }}</button>
+    <button type="button" [class.active]="statusFilter() === 'CONFIRMED'" (click)="statusFilter.set('CONFIRMED')">Confirmés</button>
+    <button type="button" [class.active]="statusFilter() === 'SCHEDULED'" (click)="statusFilter.set('SCHEDULED')">Planifiés</button>
+    <button type="button" [class.active]="statusFilter() === 'COMPLETED'" (click)="statusFilter.set('COMPLETED')">Terminés</button>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+  } @else if (error() && !showForm()) {
+    <div class="error-state">{{ error() }}</div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <app-icon name="appointments" [size]="48" />
+      <p>Aucun rendez-vous</p>
+    </div>
+  } @else {
+    <div class="timeline">
+      @for (a of filtered(); track a.id; let i = $index) {
+        <article class="timeline-card animate-fade-up" [style.animation-delay]="i * 0.06 + 's'">
+          <div class="timeline-date">
+            <span class="day">{{ a.scheduledAt | date: 'dd' }}</span>
+            <span class="month">{{ a.scheduledAt | date: 'MMM' }}</span>
+          </div>
+          <div class="timeline-body">
+            <div class="timeline-header">
+              <h3>{{ a.reason ?? 'Consultation' }}</h3>
+              <span [class]="statusOf(a.status).class">{{ statusOf(a.status).label }}</span>
+            </div>
+            <p class="timeline-time">
+              <app-icon name="clock" [size]="14" />
+              {{ a.scheduledAt | date: 'EEEE d MMMM yyyy à HH:mm' }} · {{ a.durationMinutes }} min
+            </p>
+            @if (a.notes) {
+              <p class="timeline-notes">
+                <app-icon name="notes" [size]="14" />
+                {{ a.notes }}
+              </p>
+            }
+            <div class="card-actions">
+              @if (a.status === 'SCHEDULED') {
+                <button type="button" class="btn-sm" (click)="confirm(a.id)">{{ 'appointments.confirm' | t }}</button>
+                <button type="button" class="btn-sm danger" (click)="cancel(a.id)">{{ 'appointments.cancel' | t }}</button>
+              }
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

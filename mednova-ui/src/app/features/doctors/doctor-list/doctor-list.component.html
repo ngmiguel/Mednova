@@ -1,0 +1,66 @@
+<div class="page">
+  <header class="page-hero animate-fade-up">
+    <div>
+      <h1>Médecins</h1>
+      <p>{{ filtered().length }} praticien(s) — spécialités & disponibilités</p>
+    </div>
+    <span class="hero-badge">
+      <app-icon name="doctors" [size]="16" />
+      Corps médical
+    </span>
+  </header>
+
+  <div class="search-bar animate-fade-up">
+    <app-icon name="search" [size]="18" />
+    <input type="search" placeholder="Rechercher un médecin…" [value]="search()" (input)="search.set($any($event.target).value)" />
+  </div>
+
+  @if (specialties().length > 1) {
+    <div class="filter-chips">
+      <button type="button" [class.active]="!specialtyFilter()" (click)="specialtyFilter.set(null)">Tous</button>
+      @for (spec of specialties(); track spec) {
+        <button type="button" [class.active]="specialtyFilter() === spec" (click)="specialtyFilter.set(spec)">
+          {{ specialtyLabel(spec) }}
+        </button>
+      }
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement du corps médical…</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <p>{{ error() }}</p>
+      <button type="button" class="retry-btn" (click)="retry()">
+        <app-icon name="refresh" [size]="16" />
+        Réessayer
+      </button>
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <app-icon name="doctors" [size]="48" />
+      <p>Aucun médecin trouvé</p>
+    </div>
+  } @else {
+    <div class="entity-grid">
+      @for (d of filtered(); track d.id; let i = $index) {
+        <article class="entity-card" [style.animation-delay]="i * 0.05 + 's'">
+          <div class="entity-avatar" [style.background]="avatarColor(d.firstName)">
+            {{ d.firstName.charAt(0) }}{{ d.lastName.charAt(0) }}
+          </div>
+          <h3 class="entity-name">Dr. {{ d.firstName }} {{ d.lastName }}</h3>
+          <p class="entity-meta"><app-icon name="mail" [size]="14" /> {{ d.email }}</p>
+          <div class="entity-badges">
+            <span class="badge-info">{{ specialtyLabel(d.specialty) }}</span>
+            <span [class]="d.active !== false ? 'badge-success' : 'badge-neutral'">
+              {{ d.active !== false ? 'Disponible' : 'Inactif' }}
+            </span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

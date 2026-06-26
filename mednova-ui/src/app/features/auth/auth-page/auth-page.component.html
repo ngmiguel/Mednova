@@ -1,0 +1,203 @@
+<div class="auth-layout">
+  <aside class="hero-panel">
+    <div class="hero-bg"></div>
+    <div class="hero-content animate-in">
+      <img src="assets/logo.png" alt="MedNova" class="hero-logo" width="72" height="72" />
+      <img src="assets/auth-hero.svg" alt="" class="hero-image" />
+      <h1>MedNova AI</h1>
+      <p>Santé prédictive intelligente pour professionnels et patients.</p>
+    </div>
+  </aside>
+
+  <main class="form-panel animate-in delay">
+    <div class="form-card">
+      @if (error()) {
+        <div class="toast error">{{ error() }}</div>
+      }
+      @if (success()) {
+        <div class="toast success">{{ success() }}</div>
+      }
+
+      @switch (view()) {
+        @case ('login') {
+          <header class="form-header">
+            <h2>Bienvenue</h2>
+            <p>Connectez-vous à votre espace</p>
+          </header>
+
+          <div class="mode-switch">
+            <button type="button" class="active">Connexion</button>
+            <button type="button" (click)="setView('register')">Inscription</button>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="auth-form">
+            <label>
+              <span>Email</span>
+              <input type="email" formControlName="email" autocomplete="username" placeholder="admin@mednova.ai" />
+            </label>
+
+            <label>
+              <span>Mot de passe</span>
+              <div class="password-wrap">
+                <input
+                  [type]="showPassword() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="current-password"
+                  placeholder="••••••••"
+                />
+                <button type="button" class="eye-btn" (click)="togglePassword()" [attr.aria-label]="showPassword() ? 'Masquer' : 'Afficher'">
+                  @if (showPassword()) {
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                      <path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+                    </svg>
+                  } @else {
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                      <path fill="currentColor" d="M12 7a5 5 0 0 0-5 5 5 5 0 0 0 5 5 5 5 0 0 0 5-5 5 5 0 0 0-5-5zm0 8a3 3 0 1 1 0-6 3 3 0 0 1 0 6zm7.94-5.06A16.4 16.4 0 0 0 12 4.5C7 4.5 2.73 7.61 1 12a16.4 16.4 0 0 0 7.94 5.06l1.06-1.83A14.4 14.4 0 0 1 12 13.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5c0 1.02-.31 1.97-.84 2.76l1.78 1.03z"/>
+                    </svg>
+                  }
+                </button>
+              </div>
+            </label>
+
+            <div class="form-row">
+              <label class="check">
+                <input type="checkbox" formControlName="rememberMe" />
+                Se souvenir de moi
+              </label>
+              <button type="button" class="text-link" (click)="setView('forgot-email')">Mot de passe oublié ?</button>
+            </div>
+
+            <button type="submit" class="btn-primary" [disabled]="loading()">
+              @if (loading()) { <span class="spinner"></span> }
+              {{ loading() ? 'Connexion…' : 'Se connecter' }}
+            </button>
+          </form>
+
+          <div class="demo-section">
+            <button type="button" class="demo-toggle" (click)="toggleDemoPicker()">
+              Comptes démo (password123)
+            </button>
+            @if (showDemoPicker()) {
+              <div class="demo-list">
+                @for (a of demoAccounts; track a.email) {
+                  <button type="button" (click)="fillDemo(a.email, a.password)">{{ a.label }}</button>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="social-section">
+            <p>Ou continuer avec</p>
+            <div class="social-row">
+              <button type="button" class="social-btn" (click)="onSocialLogin('Google')" title="Google">
+                <img src="assets/icons/google.svg" alt="Google" />
+              </button>
+              <button type="button" class="social-btn" (click)="onSocialLogin('Microsoft')" title="Microsoft">
+                <img src="assets/icons/microsoft.svg" alt="Microsoft" />
+              </button>
+              <button type="button" class="social-btn apple" (click)="onSocialLogin('Apple')" title="Apple">
+                <img src="assets/icons/apple.svg" alt="Apple" />
+              </button>
+            </div>
+          </div>
+        }
+
+        @case ('two-factor') {
+          <header class="form-header">
+            <h2>Double authentification</h2>
+            <p>Code à 6 chiffres (Google Authenticator)</p>
+          </header>
+          <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="auth-form">
+            <label>
+              <span>Code TOTP</span>
+              <input formControlName="code" maxlength="6" inputmode="numeric" placeholder="000000" />
+            </label>
+            <button type="submit" class="btn-primary" [disabled]="loading()">Valider</button>
+            <button type="button" class="text-link" (click)="setView('login')">← Retour</button>
+          </form>
+        }
+
+        @case ('register') {
+          <header class="form-header">
+            <h2>Créer un compte</h2>
+            <p>Rejoignez MedNova en quelques secondes</p>
+          </header>
+          <div class="mode-switch">
+            <button type="button" (click)="setView('login')">Connexion</button>
+            <button type="button" class="active">Inscription</button>
+          </div>
+          <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="auth-form">
+            <div class="grid-2">
+              <label><span>Prénom</span><input formControlName="firstName" /></label>
+              <label><span>Nom</span><input formControlName="lastName" /></label>
+            </div>
+            <label><span>Email</span><input type="email" formControlName="email" /></label>
+            <label>
+              <span>Mot de passe</span>
+              <input type="password" formControlName="password" />
+              <small [style.color]="registerPasswordStrength().color">Force : {{ registerPasswordStrength().label }}</small>
+            </label>
+            <label><span>Confirmer</span><input type="password" formControlName="confirmPassword" /></label>
+            <label><span>Rôle</span>
+              <select formControlName="role">
+                @for (r of roles; track r.value) {
+                  <option [value]="r.value">{{ r.label }}</option>
+                }
+              </select>
+            </label>
+            <label class="check">
+              <input type="checkbox" formControlName="acceptTerms" />
+              J'accepte les conditions d'utilisation
+            </label>
+            <button type="submit" class="btn-primary" [disabled]="loading()">Créer mon compte</button>
+          </form>
+        }
+
+        @case ('forgot-email') {
+          <header class="form-header">
+            <h2>Mot de passe oublié</h2>
+            <p>Nous vous enverrons un code par email</p>
+          </header>
+          <form [formGroup]="forgotEmailForm" (ngSubmit)="submitForgotEmail()" class="auth-form">
+            <label><span>Email</span><input type="email" formControlName="email" /></label>
+            <button type="submit" class="btn-primary" [disabled]="loading()">Envoyer le code</button>
+            <button type="button" class="text-link" (click)="setView('login')">← Retour</button>
+          </form>
+        }
+
+        @case ('forgot-otp') {
+          <header class="form-header">
+            <h2>Vérification</h2>
+            <p>Code envoyé à {{ forgotEmail() }}</p>
+          </header>
+          <form [formGroup]="forgotOtpForm" (ngSubmit)="submitForgotOtp()" class="auth-form">
+            <label><span>Code OTP</span><input formControlName="otp" maxlength="6" inputmode="numeric" placeholder="000000" /></label>
+            <button type="submit" class="btn-primary" [disabled]="loading()">Continuer</button>
+            <p class="hint">Sans SMTP, consultez les logs <code>auth-service</code> pour le code.</p>
+            <button type="button" class="text-link" (click)="setView('login')">← Retour</button>
+          </form>
+        }
+
+        @case ('forgot-reset') {
+          <header class="form-header">
+            <h2>Nouveau mot de passe</h2>
+          </header>
+          <form [formGroup]="forgotResetForm" (ngSubmit)="submitForgotReset()" class="auth-form">
+            <label>
+              <span>Mot de passe</span>
+              <div class="password-wrap">
+                <input [type]="showNewPassword() ? 'text' : 'password'" formControlName="newPassword" />
+                <button type="button" class="eye-btn" (click)="toggleNewPassword()" aria-label="Afficher">
+                  <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5C21.27 7.61 17 4.5 12 4.5zm0 12.5a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/></svg>
+                </button>
+              </div>
+              <small [style.color]="resetPasswordStrength().color">Force : {{ resetPasswordStrength().label }}</small>
+            </label>
+            <label><span>Confirmer</span><input type="password" formControlName="confirmPassword" /></label>
+            <button type="submit" class="btn-primary" [disabled]="loading()">Enregistrer</button>
+          </form>
+        }
+      }
+    </div>
+  </main>
+</div>

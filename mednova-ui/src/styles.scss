@@ -1,0 +1,191 @@
+@use './app/shared/styles/theme' as theme;
+
+:root,
+html.theme-light {
+  @include theme.theme-light;
+  --primary: #0d9488;
+  --primary-dark: #0f766e;
+  --primary-light: #14b8a6;
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.35);
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --sidebar-w: 280px;
+}
+
+html.theme-dark {
+  @include theme.theme-dark;
+  --primary: #2dd4bf;
+  --primary-dark: #14b8a6;
+  --primary-light: #5eead4;
+  --accent: #818cf8;
+  --accent-glow: rgba(129, 140, 248, 0.35);
+  --success: #34d399;
+  --warning: #fbbf24;
+  --danger: #f87171;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', Inter, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg-page);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+input,
+select,
+textarea {
+  color: var(--text);
+  background: var(--input-bg);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 24px 4px var(--accent-glow);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.6s ease-out both;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg-card) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+html.no-animations,
+html.no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+html.compact-sidebar {
+  --sidebar-w: 72px;
+}
+
+html.compact-sidebar .sidebar {
+  width: 72px;
+
+  .sidebar-brand > div:last-child,
+  .nav-section-label,
+  .nav-label,
+  .user-info,
+  .logout-text {
+    display: none;
+  }
+
+  .nav-link {
+    position: relative;
+    justify-content: center;
+    padding: 0.75rem;
+  }
+
+  .nav-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 0.55rem;
+  }
+
+  .user-card {
+    justify-content: center;
+  }
+
+  .logout-btn {
+    padding: 0.65rem;
+  }
+}
+
+html.compact-sidebar .content {
+  margin-left: 72px;
+}
+
+html.density-compact .page {
+  padding: 1.25rem 1.5rem 2rem;
+}
+
+html.theme-dark .content {
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(20, 184, 166, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 100%, rgba(99, 102, 241, 0.06) 0%, transparent 45%);
+}
+
+html.theme-dark .error-state {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(248, 113, 113, 0.3);
+  color: #fca5a5;
+}
