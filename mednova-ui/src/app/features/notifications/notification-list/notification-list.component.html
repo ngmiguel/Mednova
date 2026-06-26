@@ -1,0 +1,71 @@
+<div class="page">
+  <header class="page-hero animate-fade-up">
+    <div>
+      <h1>Notifications</h1>
+      <p>{{ notificationService.unreadCount() }} non lue(s) — alertes cliniques & rendez-vous</p>
+    </div>
+    <span class="hero-badge">
+      <app-icon name="notifications" [size]="16" />
+      Centre d'alertes
+    </span>
+  </header>
+
+  <div class="toolbar animate-fade-up">
+    <div class="filter-chips">
+      <button type="button" [class.active]="filter() === 'all'" (click)="setFilter('all')">Toutes</button>
+      <button type="button" [class.active]="filter() === 'unread'" (click)="setFilter('unread')">
+        Non lues ({{ notificationService.unreadCount() }})
+      </button>
+    </div>
+    <div class="toolbar-actions">
+      <button type="button" class="btn-ghost" (click)="refresh()" [disabled]="notificationService.loading()">
+        <app-icon name="refresh" [size]="16" />
+        Actualiser
+      </button>
+      @if (notificationService.unreadCount() > 0) {
+        <button type="button" class="btn-primary" (click)="markAllRead()">Tout marquer comme lu</button>
+      }
+    </div>
+  </div>
+
+  @if (notificationService.loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement des notifications…</p>
+    </div>
+  } @else if (notificationService.error()) {
+    <div class="error-state">{{ notificationService.error() }}</div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <app-icon name="bell-off" [size]="48" />
+      <p>Aucune notification</p>
+    </div>
+  } @else {
+    <div class="notification-list">
+      @for (n of filtered(); track n.id; let i = $index) {
+        <article
+          class="notification-card animate-fade-up"
+          [class.unread]="n.status === 'UNREAD'"
+          [style.animation-delay]="i * 0.04 + 's'"
+        >
+          <div class="notif-icon" [class]="'type-' + n.type">
+            <app-icon [name]="iconFor(n.type)" [size]="20" />
+          </div>
+          <div class="notif-body">
+            <div class="notif-head">
+              <span class="badge-info">{{ typeLabel(n.type) }}</span>
+              <time>{{ n.createdAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+            </div>
+            <h3>{{ n.title }}</h3>
+            <p>{{ n.message }}</p>
+          </div>
+          @if (n.status === 'UNREAD') {
+            <button type="button" class="btn-mark" (click)="markRead(n.id)" title="Marquer comme lu">
+              <app-icon name="check" [size]="16" />
+            </button>
+          }
+        </article>
+      }
+    </div>
+  }
+</div>

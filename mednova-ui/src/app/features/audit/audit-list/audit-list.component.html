@@ -1,0 +1,42 @@
+<div class="page">
+  <header class="page-hero animate-fade-up">
+    <div>
+      <h1>Journal d'audit</h1>
+      <p>{{ events().length }} événement(s) — traçabilité & conformité RGPD</p>
+    </div>
+    <span class="hero-badge">
+      <app-icon name="audit" [size]="16" />
+      Conformité
+    </span>
+  </header>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Chargement du journal…</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">{{ error() }}</div>
+  } @else if (events().length === 0) {
+    <div class="empty-state">
+      <app-icon name="audit" [size]="48" />
+      <p>Aucun événement d'audit pour le moment</p>
+    </div>
+  } @else {
+    <div class="audit-list">
+      @for (e of events(); track e.eventId; let i = $index) {
+        <article class="audit-card animate-fade-up" [style.animation-delay]="i * 0.04 + 's'">
+          <div class="audit-icon"><app-icon [name]="eventIcon(e.eventType)" [size]="20" /></div>
+          <div class="audit-content">
+            <div class="audit-header">
+              <span class="badge-info">{{ e.eventType }}</span>
+              <span class="audit-source">{{ e.source }}</span>
+            </div>
+            <p class="audit-time">{{ e.receivedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</p>
+            <code class="audit-id">{{ e.eventId }}</code>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</div>

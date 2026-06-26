@@ -1,0 +1,198 @@
+@use '../../../shared/styles/page-shell';
+
+.page .page-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-badge {
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn-book {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.booking-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+
+  h3 {
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.88rem;
+  }
+
+  input,
+  select,
+  textarea {
+    padding: 0.55rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    font-family: inherit;
+    background: var(--input-bg);
+  }
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.btn-primary,
+.btn-ghost,
+.btn-sm {
+  padding: 0.5rem 1rem;
+  border-radius: 9px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+}
+
+.btn-ghost {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.btn-sm {
+  font-size: 0.8rem;
+  background: rgba(13, 148, 136, 0.12);
+  color: var(--primary-dark);
+  border: 1px solid var(--border);
+
+  &.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.timeline-card {
+  @include page-shell.glass-card;
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  animation: fadeUp 0.5s ease-out both;
+
+  &:hover {
+    transform: translateX(6px);
+  }
+}
+
+.timeline-date {
+  flex-shrink: 0;
+  width: 64px;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: #fff;
+
+  .day {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .month {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.9;
+    margin-top: 0.15rem;
+  }
+}
+
+.timeline-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+}
+
+.timeline-time,
+.timeline-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.timeline-time {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.timeline-notes {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0.75rem;
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent);
+}

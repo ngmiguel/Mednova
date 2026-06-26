@@ -1,0 +1,133 @@
+<div class="wa-page">
+  @if (loading()) {
+    <div class="wa-loading">
+      <div class="spinner"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+  } @else if (error()) {
+    <div class="wa-error">{{ error() }}</div>
+  } @else {
+    <div class="wa-shell">
+      <!-- Panneau contacts (style WhatsApp) -->
+      <aside class="wa-sidebar">
+        <header class="wa-sidebar-header">
+          <h1>{{ 'messaging.title' | t }}</h1>
+          <p>{{ isPatient() ? ('messaging.contacts.doctors' | t) : ('messaging.contacts.patients' | t) }}</p>
+        </header>
+
+        <div class="wa-search">
+          <app-icon name="search" [size]="16" />
+          <input
+            type="search"
+            [(ngModel)]="searchQuery"
+            [placeholder]="'messaging.search' | t"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="wa-contact-list">
+          @for (contact of filteredContacts(); track contact.id) {
+            <button
+              type="button"
+              class="wa-contact"
+              [class.active]="selectedContact()?.id === contact.id"
+              (click)="selectContact(contact)"
+            >
+              <span class="wa-avatar">{{ initials(contact) }}</span>
+              <span class="wa-contact-body">
+                <span class="wa-contact-top">
+                  <strong>
+                    @if (isPatient()) {
+                      Dr. {{ contact.firstName }} {{ contact.lastName }}
+                    } @else {
+                      {{ contact.firstName }} {{ contact.lastName }}
+                    }
+                  </strong>
+                  @if (contact.lastActivity) {
+                    <time>{{ contact.lastActivity | date: 'HH:mm' }}</time>
+                  }
+                </span>
+                <span class="wa-contact-preview">
+                  @if (contact.preview) {
+                    {{ contact.preview }}
+                  } @else if (contact.specialty) {
+                    {{ contact.specialty }}
+                  } @else if (contact.conversationId) {
+                    {{ 'messaging.hasChat' | t }}
+                  } @else {
+                    {{ 'messaging.tapToChat' | t }}
+                  }
+                </span>
+              </span>
+            </button>
+          } @empty {
+            <p class="wa-empty-list">{{ 'messaging.noContacts' | t }}</p>
+          }
+        </div>
+      </aside>
+
+      <!-- Panneau chat -->
+      <section class="wa-chat" [class.empty]="!selectedContact()">
+        @if (selectedContact(); as contact) {
+          <header class="wa-chat-header">
+            <span class="wa-avatar">{{ initials(contact) }}</span>
+            <div>
+              <strong>
+                @if (isPatient()) {
+                  Dr. {{ contact.firstName }} {{ contact.lastName }}
+                } @else {
+                  {{ contact.firstName }} {{ contact.lastName }}
+                }
+              </strong>
+              @if (opening()) {
+                <small>{{ 'common.loading' | t }}</small>
+              } @else {
+                <small>{{ 'messaging.secure' | t }}</small>
+              }
+            </div>
+          </header>
+
+          <div class="wa-messages">
+            @if (opening()) {
+              <div class="wa-opening">
+                <div class="spinner"></div>
+              </div>
+            } @else if (messages().length === 0) {
+              <div class="wa-no-msgs">
+                <app-icon name="messages" [size]="40" />
+                <p>{{ 'messaging.startHint' | t }}</p>
+              </div>
+            } @else {
+              @for (m of messages(); track m.id) {
+                <div class="wa-bubble" [class.mine]="isMine(m)">
+                  <p>{{ m.content }}</p>
+                  <time>{{ m.sentAt | date: 'HH:mm' }}</time>
+                </div>
+              }
+            }
+          </div>
+
+          <form class="wa-composer" (ngSubmit)="send()">
+            <input
+              type="text"
+              [(ngModel)]="draft"
+              name="draft"
+              [placeholder]="'messaging.placeholder' | t"
+              [disabled]="opening() || !contact.conversationId"
+              autocomplete="off"
+            />
+            <button type="submit" [disabled]="sending() || opening() || !draft.trim() || !contact.conversationId">
+              <app-icon name="send" [size]="20" />
+            </button>
+          </form>
+        } @else {
+          <div class="wa-placeholder">
+            <app-icon name="messages" [size]="64" />
+            <h2>{{ 'messaging.pickContact' | t }}</h2>
+            <p>{{ isPatient() ? ('messaging.pickDoctor' | t) : ('messaging.pickPatient' | t) }}</p>
+          </div>
+        }
+      </section>
+    </div>
+  }
+</div>

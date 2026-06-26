@@ -1,0 +1,97 @@
+<div class="dashboard">
+  <header class="page-hero animate-fade-up">
+    <div class="hero-content">
+      @if (authService.currentUser(); as user) {
+        <p class="hero-greeting">{{ 'dashboard.greeting' | t }}, {{ user.firstName }}</p>
+        <h1>{{ roleLabel() }}</h1>
+        <p>{{ 'dashboard.greeting.sub' | t }}</p>
+      } @else {
+        <h1>{{ 'app.name' | t }} AI</h1>
+        <p>{{ 'common.loading' | t }}</p>
+      }
+    </div>
+    <div class="hero-visual animate-float">
+      <img src="assets/logo.png" alt="MedNova" width="96" height="96" class="hero-logo-dash" />
+      <span class="floating-badge">Live</span>
+    </div>
+  </header>
+
+  <div class="stat-grid">
+    <article class="stat-card" style="animation-delay: 0.05s">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #0d9488, #14b8a6)">
+        <app-icon name="patients" [size]="22" />
+      </div>
+      <div>
+        <div class="stat-value">{{ navStats.loading() ? '—' : navStats.counts().patients }}</div>
+        <div class="stat-label">{{ 'dashboard.stats.patients' | t }}</div>
+      </div>
+    </article>
+    <article class="stat-card" style="animation-delay: 0.1s">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6)">
+        <app-icon name="doctors" [size]="22" />
+      </div>
+      <div>
+        <div class="stat-value">{{ navStats.loading() ? '—' : navStats.counts().doctors }}</div>
+        <div class="stat-label">{{ 'dashboard.stats.doctors' | t }}</div>
+      </div>
+    </article>
+    <article class="stat-card" style="animation-delay: 0.15s">
+      <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24)">
+        <app-icon name="appointments" [size]="22" />
+      </div>
+      <div>
+        <div class="stat-value">{{ navStats.loading() ? '—' : navStats.counts().appointments }}</div>
+        <div class="stat-label">{{ 'dashboard.stats.appointments' | t }}</div>
+      </div>
+    </article>
+    @if (canSee(['ROLE_ADMIN', 'ROLE_AUDITOR'])) {
+      <article class="stat-card" style="animation-delay: 0.2s">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #64748b, #94a3b8)">
+          <app-icon name="audit" [size]="22" />
+        </div>
+        <div>
+          <div class="stat-value">{{ navStats.loading() ? '—' : navStats.counts().auditEvents }}</div>
+          <div class="stat-label">{{ 'dashboard.stats.audit' | t }}</div>
+        </div>
+      </article>
+    }
+  </div>
+
+  <section class="modules-section">
+    <h2 class="section-title">{{ 'dashboard.modules' | t }}</h2>
+    <div class="modules-grid">
+      @for (mod of modules; track mod.titleKey) {
+        @if (canSee(mod.roles)) {
+          <a [routerLink]="mod.link" class="module-card animate-fade-up" [style.--accent-color]="mod.color">
+            <div class="module-icon"><app-icon [name]="mod.icon" [size]="24" /></div>
+            <h3>{{ mod.titleKey | t }}</h3>
+            <p>{{ mod.descKey | t }}</p>
+            <span class="module-arrow"><app-icon name="chevron-right" [size]="18" /></span>
+          </a>
+        }
+      }
+    </div>
+  </section>
+
+  @if (authService.currentUser(); as user) {
+    <section class="profile-panel animate-fade-up">
+      <div class="profile-avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
+      <div class="profile-details">
+        <h3>{{ user.firstName }} {{ user.lastName }}</h3>
+        <p>{{ user.email }}</p>
+        <div class="profile-badges">
+          @for (role of user.roles; track role) {
+            <span class="badge-info">{{ role.replace('ROLE_', '') }}</span>
+          }
+          <span [class]="user.twoFactorEnabled ? 'badge-success' : 'badge-neutral'">
+            2FA {{ user.twoFactorEnabled ? 'activée' : 'désactivée' }}
+          </span>
+        </div>
+      </div>
+      <div class="profile-status">
+        <span class="status-dot"></span>
+        Session active
+      </div>
+    </section>
+  }
+</div>

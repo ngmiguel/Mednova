@@ -1,0 +1,170 @@
+@use '../../../shared/styles/page-shell';
+
+.page-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.notification-card {
+  @include page-shell.glass-card;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+
+  &:hover {
+    transform: translateY(-2px);
+  }
+
+  &.unread {
+    border-left: 3px solid var(--primary-light);
+    background: var(--bg-elevated);
+  }
+}
+
+.notif-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent);
+
+  &.type-HEALTH_ALERT {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+  }
+
+  &.type-VITALS_ANOMALY {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+  }
+
+  &.type-APPOINTMENT_SCHEDULED {
+    background: rgba(13, 148, 136, 0.12);
+    color: var(--primary);
+  }
+}
+
+.notif-body {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0.35rem 0 0.25rem;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+}
+
+.notif-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  time {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+}
+
+.btn-mark {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: rgba(13, 148, 136, 0.1);
+  }
+}
+
+.btn-primary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+}
+
+.btn-ghost {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.badge-info {
+  @include page-shell.badge(rgba(99, 102, 241, 0.15), #4f46e5);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+
+  app-icon {
+    opacity: 0.45;
+    margin-bottom: 1rem;
+  }
+}
