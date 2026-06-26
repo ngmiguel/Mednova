@@ -1,0 +1,9 @@
+# =============================================================================
+# DEPRECATED — Utilisez uniquement docker-compose.yml
+#
+#   docker compose up --build -d
+#
+# Ce fichier est conservé pour compatibilité ; il ne définit plus de services.
+# =============================================================================
+
+services: {}

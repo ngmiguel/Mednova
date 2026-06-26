@@ -1,0 +1,14 @@
+# Build
+target/
+**/target/
+.git/
+.github/
+.idea/
+*.iml
+.env
+*.md
+docs/
+scripts/
+docker/
+docker-compose*.yml
+LICENSE
