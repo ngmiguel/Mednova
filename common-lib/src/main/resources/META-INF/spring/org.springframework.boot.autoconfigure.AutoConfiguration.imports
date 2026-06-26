@@ -1,0 +1,2 @@
+com.mednova.common.config.CommonLibAutoConfiguration
+com.mednova.common.config.MailAutoConfiguration
