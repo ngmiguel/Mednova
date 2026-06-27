@@ -231,6 +231,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       : const Icon(Icons.refresh),
                   label: Text(strings.refreshStats),
                 ),
+                const SizedBox(height: 10),
+                Text(
+                  '${AppConfig.platformLabel} · env ${AppConfig.appEnv}',
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                ),
+                Text(
+                  AppConfig.apiBaseUrl,
+                  style: const TextStyle(color: AppColors.textMuted, fontSize: 10),
+                ),
               ],
             ),
           ),

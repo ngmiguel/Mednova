@@ -1,18 +1,15 @@
-import 'dart:io';
-
-import 'package:flutter/foundation.dart';
+import 'platform_config.dart';
 
 class AppConfig {
   AppConfig._();
 
   static const appName = 'MedNova AI';
 
-  /// Gateway API — Android emulator uses 10.0.2.2 for host localhost.
-  static String get apiBaseUrl {
-    if (kIsWeb) return 'http://localhost:8080/api/v1';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080/api/v1';
-    return 'http://localhost:8080/api/v1';
-  }
+  /// Gateway API — resolved per platform (see [PlatformConfig]).
+  static String get apiBaseUrl => PlatformConfig.apiBaseUrl;
+
+  static String get appEnv => PlatformConfig.appEnv;
+  static String get platformLabel => PlatformConfig.platformLabel;
 }
 
 enum UserRole {

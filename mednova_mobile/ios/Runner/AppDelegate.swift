@@ -7,6 +7,9 @@ import UIKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    if #available(iOS 13.0, *) {
+      // Edge-to-edge: content draws under status bar (Flutter handles insets).
+    }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

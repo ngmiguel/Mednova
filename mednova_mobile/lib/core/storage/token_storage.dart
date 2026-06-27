@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../data/models/auth_models.dart';
+import '../platform/secure_storage_factory.dart';
 
 enum SessionMode { none, api, demo }
 
@@ -99,7 +100,7 @@ class TokenStorage {
 }
 
 final tokenStorageProvider = Provider<TokenStorage>(
-  (_) => TokenStorage(const FlutterSecureStorage()),
+  (_) => TokenStorage(createSecureStorage()),
 );
 
 final sessionModeProvider = StateProvider<SessionMode>((ref) => SessionMode.none);
