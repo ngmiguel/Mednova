@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/animations/mednova_3d_scene.dart';
 import '../../core/theme/app_theme.dart';
+import '../providers/settings_provider.dart';
 
 /// Standard page wrapper: parallax 3D background + animated header + content.
-class MedNovaPageScaffold extends StatelessWidget {
+class MedNovaPageScaffold extends ConsumerWidget {
   const MedNovaPageScaffold({
     super.key,
     required this.title,
@@ -26,7 +28,10 @@ class MedNovaPageScaffold extends StatelessWidget {
   final double orbSize;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final animations = ref.watch(animationsEnabledProvider);
+    final padding = ref.watch(pagePaddingProvider);
+
     return Parallax3DBackground(
       child: SafeArea(
         child: CustomScrollView(
@@ -34,7 +39,7 @@ class MedNovaPageScaffold extends StatelessWidget {
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: EdgeInsets.fromLTRB(padding, 12, padding, 0),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -44,36 +49,39 @@ class MedNovaPageScaffold extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              _IconBadge(icon: icon),
-                              const SizedBox(width: 12),
+                              _IconBadge(icon: icon, animate: animations),
+                              SizedBox(width: padding * 0.6),
                               Expanded(
-                                child: Text(
-                                  title,
-                                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: -0.5,
-                                      ),
-                                )
-                                    .animate()
-                                    .fadeIn(duration: 500.ms)
-                                    .slideX(begin: -0.15, curve: Curves.easeOutCubic),
+                                child: _maybeAnimate(
+                                  animations,
+                                  Text(
+                                    title,
+                                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                          letterSpacing: -0.5,
+                                        ),
+                                  ),
+                                  fadeSlideX: true,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Text(
-                            subtitle,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: AppColors.textMuted,
-                                ),
-                          )
-                              .animate(delay: 100.ms)
-                              .fadeIn()
-                              .slideY(begin: 0.2),
+                          _maybeAnimate(
+                            animations,
+                            Text(
+                              subtitle,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                            ),
+                            fadeSlideY: true,
+                            delayMs: 100,
+                          ),
                         ],
                       ),
                     ),
-                    if (showOrb)
+                    if (showOrb && animations)
                       MedNova3DOrb(size: orbSize, glowIntensity: 0.7)
                           .animate(onPlay: (c) => c.repeat(reverse: true))
                           .scale(
@@ -87,7 +95,7 @@ class MedNovaPageScaffold extends StatelessWidget {
               ),
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+              padding: EdgeInsets.fromLTRB(padding, 20, padding, 100),
               sliver: SliverToBoxAdapter(child: body),
             ),
           ],
@@ -95,15 +103,33 @@ class MedNovaPageScaffold extends StatelessWidget {
       ),
     );
   }
+
+  Widget _maybeAnimate(
+    bool enabled,
+    Widget child, {
+    bool fadeSlideX = false,
+    bool fadeSlideY = false,
+    int delayMs = 0,
+  }) {
+    if (!enabled) return child;
+    var w = child;
+    if (fadeSlideX) {
+      w = w.animate().fadeIn(duration: 500.ms).slideX(begin: -0.15, curve: Curves.easeOutCubic);
+    } else if (fadeSlideY) {
+      w = w.animate(delay: Duration(milliseconds: delayMs)).fadeIn().slideY(begin: 0.2);
+    }
+    return w;
+  }
 }
 
 class _IconBadge extends StatelessWidget {
-  const _IconBadge({required this.icon});
+  const _IconBadge({required this.icon, required this.animate});
   final IconData icon;
+  final bool animate;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final badge = Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: AppColors.auroraGradient,
@@ -117,7 +143,9 @@ class _IconBadge extends StatelessWidget {
         ],
       ),
       child: Icon(icon, color: Colors.white, size: 22),
-    )
+    );
+    if (!animate) return badge;
+    return badge
         .animate()
         .rotate(begin: -0.05, end: 0, duration: 600.ms, curve: Curves.easeOutBack)
         .fadeIn();
@@ -179,7 +207,6 @@ class RiskChip extends StatelessWidget {
   }
 }
 
-/// Loading state with spinning 3D orb.
 class MedNovaLoader extends StatelessWidget {
   const MedNovaLoader({super.key, this.message = 'Chargement...'});
 
@@ -200,7 +227,6 @@ class MedNovaLoader extends StatelessWidget {
   }
 }
 
-/// Error banner with retry.
 class MedNovaErrorBanner extends StatelessWidget {
   const MedNovaErrorBanner({super.key, required this.message, this.onRetry});
 
@@ -229,7 +255,6 @@ class MedNovaErrorBanner extends StatelessWidget {
   }
 }
 
-/// Animated empty state.
 class MedNovaEmptyState extends StatelessWidget {
   const MedNovaEmptyState({super.key, required this.icon, required this.message});
 
@@ -242,11 +267,9 @@ class MedNovaEmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 64, color: AppColors.textMuted.withValues(alpha: 0.5))
-              .animate(onPlay: (c) => c.repeat(reverse: true))
-              .rotate(begin: -0.03, end: 0.03, duration: 2.seconds),
+          Icon(icon, size: 64, color: AppColors.textMuted.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          Text(message, style: const TextStyle(color: AppColors.textMuted)),
+          Text(message, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textMuted)),
         ],
       ),
     );

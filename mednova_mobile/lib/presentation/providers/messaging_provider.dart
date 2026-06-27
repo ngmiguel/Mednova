@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/config/app_config.dart';
+import '../../core/storage/token_storage.dart';
 import '../../core/utils/specialty_labels.dart';
+import '../../data/demo/demo_catalog.dart';
 import '../../data/models/messaging_models.dart';
 import '../../data/models/patient_model.dart';
 import 'app_providers.dart';
@@ -144,7 +146,13 @@ class MessagingNotifier extends Notifier<MessagingState> {
 
     state = state.copyWith(sending: true);
     try {
-      final msg = await ref.read(messagingRepositoryProvider).sendMessage(conversationId, content.trim());
+      final me = ref.read(authProvider).valueOrNull?.user?.id ?? 'user-unknown';
+      final ChatMessageModel msg;
+      if (ref.read(sessionModeProvider) == SessionMode.demo) {
+        msg = DemoCatalog.addMessage(conversationId, me, content.trim());
+      } else {
+        msg = await ref.read(messagingRepositoryProvider).sendMessage(conversationId, content.trim());
+      }
       state = state.copyWith(
         messages: [...state.messages, msg],
         sending: false,

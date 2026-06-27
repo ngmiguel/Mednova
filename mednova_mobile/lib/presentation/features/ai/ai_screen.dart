@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/animations/mednova_3d_scene.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/models/patient_model.dart';
 import '../../providers/app_providers.dart';
 import '../../providers/person_detail_provider.dart';
 import '../../shared/person_detail_sheet.dart';
@@ -17,6 +18,21 @@ class AiScreen extends ConsumerStatefulWidget {
 
 class _AiScreenState extends ConsumerState<AiScreen> {
   String? _selectedPatientId;
+  final _searchCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  List<PatientModel> _filter(List<PatientModel> patients, String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return patients;
+    return patients
+        .where((p) => p.fullName.toLowerCase().contains(q) || p.email.toLowerCase().contains(q))
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,52 +50,97 @@ class _AiScreenState extends ConsumerState<AiScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Floating3DCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const AuroraText('Health Risk Engine'),
-                const SizedBox(height: 8),
-                const Text(
-                  'Sélectionnez un patient pour visualiser son historique d\'évaluations IA.',
-                  style: TextStyle(color: AppColors.textMuted),
-                ),
-                const SizedBox(height: 16),
-                patientsAsync.when(
-                  loading: () => const LinearProgressIndicator(),
-                  error: (_, __) => const Text('Impossible de charger les patients'),
-                  data: (patients) => DropdownButtonFormField<String>(
-                    value: _selectedPatientId,
-                    decoration: const InputDecoration(labelText: 'Patient'),
-                    items: patients
-                        .map((p) => DropdownMenuItem(value: p.id, child: Text(p.fullName)))
-                        .toList(),
-                    onChanged: (v) => setState(() => _selectedPatientId = v),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (_selectedPatientId != null)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: () => showPersonDetailSheet(
-                  context,
-                  ref,
-                  kind: PersonDetailKind.patient,
-                  id: _selectedPatientId!,
-                ),
-                icon: const Icon(Icons.person_search),
-                label: const Text('Voir la fiche patient'),
+          if (_selectedPatientId != null) ...[
+            _SelectedPatientBar(
+              name: patientsAsync.maybeWhen(
+                data: (list) => list.where((p) => p.id == _selectedPatientId).map((p) => p.fullName).firstOrNull ?? 'Patient',
+                orElse: () => 'Patient',
+              ),
+              onClear: () => setState(() => _selectedPatientId = null),
+              onOpenProfile: () => showPersonDetailSheet(
+                context,
+                ref,
+                kind: PersonDetailKind.patient,
+                id: _selectedPatientId!,
               ),
             ),
+            const SizedBox(height: 16),
+          ] else ...[
+            Floating3DCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const AuroraText('Health Risk Engine'),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tapez un nom ou sélectionnez un patient dans la liste.',
+                    style: TextStyle(color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _searchCtrl,
+                    onChanged: (_) => setState(() {}),
+                    decoration: const InputDecoration(
+                      hintText: 'Rechercher un patient…',
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            patientsAsync.when(
+              loading: () => const MedNovaLoader(message: 'Chargement des patients…'),
+              error: (_, __) => MedNovaErrorBanner(
+                message: 'Impossible de charger les patients',
+                onRetry: () => ref.invalidate(patientsProvider),
+              ),
+              data: (patients) {
+                final filtered = _filter(patients, _searchCtrl.text);
+                if (filtered.isEmpty) {
+                  return const MedNovaEmptyState(
+                    icon: Icons.person_search,
+                    message: 'Aucun patient trouvé',
+                  );
+                }
+                return Column(
+                  children: filtered.take(8).map((p) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Floating3DCard(
+                        onTap: () => setState(() {
+                          _selectedPatientId = p.id;
+                          _searchCtrl.clear();
+                        }),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: AppColors.auroraPink.withValues(alpha: 0.2),
+                              child: Text(p.firstName[0], style: const TextStyle(fontWeight: FontWeight.w800)),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(p.fullName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  Text(p.email, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: AppColors.textMuted),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
           if (_selectedPatientId == null)
-            const MedNovaEmptyState(
-              icon: Icons.biotech,
-              message: 'Choisissez un patient pour l\'analyse',
-            )
+            const SizedBox.shrink()
           else
             assessmentsAsync!.when(
               loading: () => const MedNovaLoader(message: 'Analyse en cours...'),
@@ -110,10 +171,7 @@ class _AiScreenState extends ConsumerState<AiScreen> {
                                 children: [
                                   Text(
                                     'Score ${a.riskScore}',
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w900,
-                                    ),
+                                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                                   ),
                                   RiskChip(level: a.riskLevel),
                                 ],
@@ -126,11 +184,12 @@ class _AiScreenState extends ConsumerState<AiScreen> {
                                   spacing: 6,
                                   runSpacing: 6,
                                   children: a.factors
-                                      .map((f) => Chip(
-                                            label: Text(f, style: const TextStyle(fontSize: 11)),
-                                            backgroundColor:
-                                                AppColors.glassWhite,
-                                          ))
+                                      .map(
+                                        (f) => Chip(
+                                          label: Text(f, style: const TextStyle(fontSize: 11)),
+                                          backgroundColor: AppColors.glassWhite,
+                                        ),
+                                      )
                                       .toList(),
                                 ),
                               ],
@@ -151,5 +210,45 @@ class _AiScreenState extends ConsumerState<AiScreen> {
         ],
       ),
     );
+  }
+}
+
+class _SelectedPatientBar extends StatelessWidget {
+  const _SelectedPatientBar({
+    required this.name,
+    required this.onClear,
+    required this.onOpenProfile,
+  });
+
+  final String name;
+  final VoidCallback onClear;
+  final VoidCallback onOpenProfile;
+
+  @override
+  Widget build(BuildContext context) {
+    return Floating3DCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          IconButton(onPressed: onClear, icon: const Icon(Icons.arrow_back), tooltip: 'Changer de patient'),
+          Expanded(
+            child: Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+          ),
+          TextButton.icon(
+            onPressed: onOpenProfile,
+            icon: const Icon(Icons.person_outline, size: 18),
+            label: const Text('Fiche'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+extension _FirstOrNull<T> on Iterable<T> {
+  T? get firstOrNull {
+    final it = iterator;
+    if (it.moveNext()) return it.current;
+    return null;
   }
 }

@@ -11,13 +11,17 @@ Future<void> showPersonDetailSheet(
   BuildContext context,
   WidgetRef ref, {
   required PersonDetailKind kind,
-  required String id,
+  String? id,
+  String? userId,
 }) async {
   final notifier = ref.read(personDetailProvider.notifier);
-  if (kind == PersonDetailKind.patient) {
-    await notifier.openPatient(id);
-  } else {
-    await notifier.openDoctor(id);
+  switch (kind) {
+    case PersonDetailKind.patient:
+      await notifier.openPatient(id!);
+    case PersonDetailKind.doctor:
+      await notifier.openDoctor(id!);
+    case PersonDetailKind.staff:
+      await notifier.openStaff(userId!);
   }
 
   if (!context.mounted) return;

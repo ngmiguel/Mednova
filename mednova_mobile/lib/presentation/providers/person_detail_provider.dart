@@ -80,6 +80,17 @@ class PersonDetailNotifier extends Notifier<PersonDetailState> {
 
   Future<void> openDoctor(String id) => _loadDoctor(id);
 
+  Future<void> openStaff(String userId) async {
+    if (!canBlockAccess) return;
+    state = const PersonDetailState(loading: true);
+    try {
+      final account = await ref.read(userAdminRepositoryProvider).getById(userId);
+      state = PersonDetailState(view: _mapStaff(account));
+    } catch (_) {
+      state = const PersonDetailState(error: 'Impossible de charger la fiche');
+    }
+  }
+
   void clear() => state = const PersonDetailState();
 
   Future<void> _loadPatient(String id) async {
@@ -181,6 +192,30 @@ class PersonDetailNotifier extends Notifier<PersonDetailState> {
       initials: '${d.firstName[0]}${d.lastName[0]}'.toUpperCase(),
       avatarColor: _avatarColor(d.firstName),
       fields: fields,
+      account: account,
+    );
+  }
+
+  PersonDetailViewModel _mapStaff(UserAccountModel account) {
+    final role = account.roles.isNotEmpty ? account.roles.first.replaceAll('ROLE_', '') : 'USER';
+    return PersonDetailViewModel(
+      kind: PersonDetailKind.staff,
+      id: account.id,
+      userId: account.id,
+      title: account.fullName,
+      subtitle: 'Personnel',
+      initials: '${account.firstName[0]}${account.lastName[0]}'.toUpperCase(),
+      avatarColor: _avatarColor(account.firstName),
+      fields: [
+        PersonDetailField(label: 'Email', value: account.email),
+        PersonDetailField(label: 'Rôle', value: role),
+        PersonDetailField(
+          label: '2FA',
+          value: account.twoFactorEnabled ? 'Activée' : 'Désactivée',
+        ),
+        if (account.createdAt != null)
+          PersonDetailField(label: 'Créé le', value: account.createdAt!),
+      ],
       account: account,
     );
   }
