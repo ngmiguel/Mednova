@@ -1,48 +1,92 @@
-# MedNova AI — Mobile
+# MedNova AI — Mobile (Android & iOS)
 
-Application Flutter connectée à l'API Gateway MedNova (`/api/v1`).
+Application Flutter **multiplateforme** connectée à l'API Gateway MedNova.
+
+> **Guide complet (backend + mobile) :** [README racine](../README.md#guide-de-lancement-complet) · [docs/MOBILE.md](../docs/MOBILE.md)
 
 ## Prérequis
 
-- Flutter SDK 3.11+
-- Backend MedNova en cours d'exécution (port **8080**)
+| Outil | Version |
+|-------|---------|
+| Flutter SDK | 3.11+ |
+| Android Studio / SDK | API 24+ (Android 7.0) |
+| Xcode (macOS) | 15+ pour builds iOS |
+| CocoaPods | 1.14+ (iOS) |
+| Backend MedNova | port **8080** (optionnel en mode démo) |
+
+## Démarrage en 3 commandes
 
 ```bash
-# Depuis la racine du monorepo
+# 1. Backend (depuis la racine du dépôt)
 docker compose up --build -d
-# ou Windows : .\scripts\docker\up.ps1 -Build
+
+# 2. Dépendances Flutter
+cd mednova_mobile && flutter pub get
+
+# 3. Lancer (Android)
+flutter run --flavor dev
 ```
 
-## Lancement
+**Mode démo sans backend :** chips sur l'écran de connexion ou `password123` avec les emails démo.
+
+## Installation iOS (macOS, première fois)
 
 ```bash
-cd mednova_mobile
-flutter pub get
-flutter run
+cd ios && pod install && cd ..
+flutter run -d ios
 ```
 
-### URL API par plateforme
+## Lancement détaillé
 
-| Plateforme | Base URL |
-|------------|----------|
+### Android
+
+```bash
+flutter run --flavor dev
+flutter run --flavor prod --dart-define=APP_ENV=prod --dart-define=API_BASE_URL=https://api.mednova.ai/api/v1
+```
+
+### iOS
+
+```bash
+flutter run -d ios
+```
+
+### Appareil physique
+
+```bash
+flutter run --flavor dev --dart-define=API_BASE_URL=http://192.168.1.42:8080/api/v1
+```
+
+## URL API par plateforme
+
+| Contexte | URL |
+|----------|-----|
 | Android émulateur | `http://10.0.2.2:8080/api/v1` |
-| iOS simulateur / desktop | `http://localhost:8080/api/v1` |
+| iOS simulateur | `http://localhost:8080/api/v1` |
+| Appareil physique | `--dart-define=API_BASE_URL=http://<IP>:8080/api/v1` |
 
-Configuration : `lib/core/config/app_config.dart`
+Config : `lib/core/config/platform_config.dart`
 
-## Architecture
+## Builds release
 
+```bash
+# Android APK
+flutter build apk --flavor prod --release --dart-define=APP_ENV=prod --dart-define=API_BASE_URL=https://api.mednova.ai/api/v1
+
+# Android App Bundle
+flutter build appbundle --flavor prod --release --dart-define=APP_ENV=prod --dart-define=API_BASE_URL=https://api.mednova.ai/api/v1
+
+# iOS IPA (macOS)
+flutter build ipa --release --dart-define=APP_ENV=prod --dart-define=API_BASE_URL=https://api.mednova.ai/api/v1
 ```
-lib/
-├── core/           # config, theme, network, storage, animations 3D
-├── domain/         # interfaces repositories
-├── data/           # modèles + implémentations API
-└── presentation/   # Riverpod, GoRouter, features, shared widgets
-```
 
-**State management :** Riverpod  
-**Navigation :** GoRouter + shell RBAC  
-**HTTP :** Dio + intercepteur JWT
+## Identifiants natifs
+
+| Plateforme | Application ID |
+|------------|----------------|
+| Android prod | `com.mednova.mednovaMobile` |
+| Android dev | `com.mednova.mednovaMobile.dev` |
+| iOS | `com.mednova.mednovaMobile` |
 
 ## Comptes démo
 
@@ -56,13 +100,9 @@ Mot de passe : `password123`
 | Patient | patient.test@mednova.ai |
 | Auditeur | auditor@mednova.ai |
 
-## Modules
+## VS Code
 
-- **Dashboard** — stats rapides + accès modules
-- **Patients / Médecins** — listes avec fiche détaillée (bottom sheet)
-- **Messagerie** — contacts role-based + chat avec polling 4 s
-- **IA Prédictive** — évaluations de risque par patient
-- **Admin** — blocage accès utilisateur depuis la fiche (ROLE_ADMIN)
+Configurations dans `.vscode/launch.json` (Android dev/prod, iOS, Chrome).
 
 ## Analyse
 

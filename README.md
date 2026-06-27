@@ -72,7 +72,8 @@ mednova-ai/
 └── docs/                    # Documentation
     ├── API.md               # Documentation des endpoints
     ├── ARCHITECTURE.md      # Diagrammes et flux événementiels
-    └── FRONTEND.md          # Guide Angular
+    ├── FRONTEND.md          # Guide Angular
+    └── MOBILE.md            # Guide Flutter Android/iOS
 ```
 
 Chaque microservice suit la **Clean Architecture** :
@@ -294,6 +295,130 @@ curl -X PATCH http://localhost:8080/api/v1/auth/users/{userId}/access \
 - Maven 3.9+
 - Docker & Docker Compose
 - Git
+- **Frontend web :** Node.js 20+ (Angular)
+- **Frontend mobile :** Flutter 3.11+ · Android Studio (API 24+) · Xcode 15+ (iOS, macOS)
+
+## Guide de lancement complet
+
+Ordre recommandé pour faire tourner **backend + web + mobile** sur votre machine.
+
+### Étape 1 — Backend (API Gateway + microservices)
+
+**Option A — Docker (recommandé, une commande) :**
+
+```bash
+docker compose up --build -d
+```
+
+```powershell
+# Windows — avec vérification de santé
+.\scripts\docker\up.ps1 -Build
+```
+
+**Option B — Infra Docker + services Maven** (développement Java) :
+
+```bash
+docker compose up -d          # PostgreSQL, Redis, Kafka uniquement
+cp .env.example .env
+mvn clean install -DskipTests
+# Puis lancer gateway + services (voir « Démarrage rapide » ci-dessous)
+```
+
+**Vérifier que l'API répond :**
+
+```bash
+curl http://localhost:8080/actuator/health
+# → {"status":"UP"}
+```
+
+| URL | Service |
+|-----|---------|
+| http://localhost:8080 | API Gateway |
+| http://localhost:8080/swagger-ui.html | Swagger |
+| http://localhost:4200 | Angular (si stack Docker complète) |
+
+Comptes démo (mot de passe **`password123`**) : `admin@mednova.ai`, `dr.smith@mednova.ai`, `nurse@mednova.ai`, `patient.test@mednova.ai`, `auditor@mednova.ai`
+
+Guide Docker : [docs/DOCKER.md](docs/DOCKER.md)
+
+---
+
+### Étape 2 — Interface web Angular
+
+```bash
+cd mednova-ui
+npm install
+npm start
+```
+
+Ouvrir **http://localhost:4200** — l'UI appelle la Gateway sur le port 8080.
+
+Guide complet : [docs/FRONTEND.md](docs/FRONTEND.md)
+
+---
+
+### Étape 3 — Application mobile Flutter (Android & iOS)
+
+```bash
+cd mednova_mobile
+flutter pub get
+```
+
+**iOS (première fois, macOS uniquement) :**
+
+```bash
+cd ios && pod install && cd ..
+```
+
+#### Sans backend — mode démo offline
+
+Sur l'écran de connexion, utilisez les **chips démo** ou connectez-vous avec les emails ci-dessus et `password123`. Aucun backend requis.
+
+#### Avec backend — Android
+
+```bash
+flutter run --flavor dev
+```
+
+| Contexte | URL API |
+|----------|---------|
+| Émulateur Android | `http://10.0.2.2:8080/api/v1` (automatique) |
+| Appareil physique | `--dart-define=API_BASE_URL=http://<IP_LAN_PC>:8080/api/v1` |
+
+```bash
+# Exemple : téléphone sur le même Wi-Fi que le PC (IP 192.168.1.42)
+flutter run --flavor dev --dart-define=API_BASE_URL=http://192.168.1.42:8080/api/v1
+```
+
+#### Avec backend — iOS
+
+```bash
+flutter run -d ios
+```
+
+Simulateur : `localhost:8080` automatique. iPhone physique : même `--dart-define=API_BASE_URL=...` qu'Android.
+
+#### Production mobile
+
+```bash
+flutter run --flavor prod \
+  --dart-define=APP_ENV=prod \
+  --dart-define=API_BASE_URL=https://api.mednova.ai/api/v1
+```
+
+Guides détaillés : [docs/MOBILE.md](docs/MOBILE.md) · [mednova_mobile/README.md](mednova_mobile/README.md)
+
+---
+
+### Récapitulatif des ports
+
+| Port | Service |
+|------|---------|
+| **8080** | API Gateway (web + mobile) |
+| **4200** | Angular `mednova-ui` |
+| **5433** | PostgreSQL |
+| **6379** | Redis |
+| **9092** | Kafka |
 
 ## Démarrage rapide
 
@@ -516,32 +641,41 @@ Seul l'**administrateur** voit les actions **Bloquer l'accès** / **Réactiver l
 
 ## Frontend Mobile (`mednova_mobile`)
 
-Application **Flutter** — architecture Clean (core / domain / data / presentation), UI Aurora avec animations 3D, connectée à la même API Gateway.
+Application **Flutter** multiplateforme (**Android & iOS**) — Clean Architecture, UI Aurora, RBAC aligné sur Angular.
+
+### Lancement rapide
 
 ```bash
 cd mednova_mobile
 flutter pub get
-flutter run
+flutter run --flavor dev          # Android
+flutter run -d ios                # iOS (macOS)
 ```
+
+**Mode démo offline** : chips sur l'écran login — aucun backend requis.
+
+**Mode API** : backend sur le port 8080 requis (`docker compose up --build -d`).
 
 | Plateforme | URL API Gateway |
 |------------|-----------------|
 | Android (émulateur) | `http://10.0.2.2:8080/api/v1` |
-| iOS / desktop / web dev | `http://localhost:8080/api/v1` |
+| iOS (simulateur) | `http://localhost:8080/api/v1` |
+| Appareil physique | `--dart-define=API_BASE_URL=http://<IP>:8080/api/v1` |
 
-**Prérequis :** stack backend démarrée (`docker compose up` ou services locaux sur le port 8080).
+**Flavors Android :** `dev` (HTTP local) · `prod` (HTTPS)
 
 ### Fonctionnalités mobile
 
 | Module | Description |
 |--------|-------------|
-| Auth + RBAC | Connexion JWT, navigation filtrée par rôle, comptes démo |
-| Fiches détaillées | Bottom sheet patient/médecin (admin : bloquer/réactiver accès) |
-| Messagerie | Liste contacts + fil de chat avec polling temps réel (4 s) |
-| IA Prédictive | Sélection patient, historique des évaluations, lien fiche |
+| Auth + RBAC | JWT ou mode démo offline, navigation filtrée par rôle |
+| Dashboard | KPI + graphiques (RDV, risques IA, activité) |
+| Fiches détaillées | Bottom sheet patient/médecin (admin : bloquer accès) |
+| Messagerie | Contacts + chat polling 4 s |
+| IA Prédictive | Recherche patient, évaluations de risque |
 | 9 modules | Dashboard, Patients, Médecins, RDV, IA, Messages, Alertes, Audit, Réglages |
 
-Guide détaillé : [mednova_mobile/README.md](mednova_mobile/README.md)
+Guides : [docs/MOBILE.md](docs/MOBILE.md) · [mednova_mobile/README.md](mednova_mobile/README.md)
 
 ## Déploiement Docker (stack complète)
 
@@ -593,6 +727,8 @@ docker compose down -v
 | [docs/API.md](docs/API.md) | Endpoints REST détaillés |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Diagrammes, flux Kafka, Clean Architecture |
 | [docs/FRONTEND.md](docs/FRONTEND.md) | Guide Angular, comptes démo, déploiement |
+| [docs/MOBILE.md](docs/MOBILE.md) | Guide Flutter Android/iOS, flavors, builds release |
+| [mednova_mobile/README.md](mednova_mobile/README.md) | Référence rapide application mobile |
 | [scripts/demo-flow.ps1](scripts/demo-flow.ps1) | Démo automatisée vitals → AI → notification → audit |
 
 ## Roadmap — Phase 2
