@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../config/app_settings.dart' as settings;
+
 class AppColors {
   AppColors._();
 
@@ -97,5 +99,43 @@ class AppTheme {
         ),
       ),
     );
+  }
+
+  static ThemeData get light {
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: const Color(0xFFF1F5F9),
+      colorScheme: const ColorScheme.light(
+        primary: AppColors.auroraTeal,
+        secondary: AppColors.auroraViolet,
+        surface: Colors.white,
+        error: AppColors.danger,
+      ),
+    );
+    return base.copyWith(
+      textTheme: GoogleFonts.plusJakartaSansTextTheme(base.textTheme),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.auroraTeal,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+    );
+  }
+
+  static ThemeMode resolveThemeMode(settings.ThemeMode preference, Brightness platform) {
+    return switch (preference) {
+      settings.ThemeMode.dark => ThemeMode.dark,
+      settings.ThemeMode.light => ThemeMode.light,
+      settings.ThemeMode.system =>
+        platform == Brightness.dark ? ThemeMode.dark : ThemeMode.light,
+    };
   }
 }
