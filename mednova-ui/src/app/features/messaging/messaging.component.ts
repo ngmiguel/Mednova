@@ -8,6 +8,7 @@ import { ApiResponse } from '../../core/models/api-response.model';
 import { PageResponse } from '../../core/models/page-response.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ChatMessage, Conversation, MessagingService } from '../../core/services/messaging.service';
+import { PersonDetailModalService } from '../../core/services/person-detail-modal.service';
 import { TokenStorageService } from '../../core/services/token-storage.service';
 import { TranslatePipe } from '../../core/i18n/translate.pipe';
 import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
@@ -42,6 +43,7 @@ export class MessagingComponent implements OnInit {
   private readonly messaging = inject(MessagingService);
   private readonly http = inject(HttpClient);
   private readonly tokenStorage = inject(TokenStorageService);
+  private readonly personModal = inject(PersonDetailModalService);
   readonly authService = inject(AuthService);
 
   readonly contacts = signal<ChatContact[]>([]);
@@ -156,6 +158,16 @@ export class MessagingComponent implements OnInit {
 
   initials(contact: ChatContact): string {
     return `${contact.firstName.charAt(0)}${contact.lastName.charAt(0)}`.toUpperCase();
+  }
+
+  openContactDetail(): void {
+    const contact = this.selectedContact();
+    if (!contact) return;
+    if (this.isPatient()) {
+      this.personModal.openDoctor(contact.id);
+    } else {
+      this.personModal.openPatient(contact.id);
+    }
   }
 
   private buildContacts(people: PersonRow[], conversations: Conversation[]): ChatContact[] {

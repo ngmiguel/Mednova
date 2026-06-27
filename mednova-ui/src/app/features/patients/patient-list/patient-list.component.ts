@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/api-response.model';
 import { PageResponse } from '../../../core/models/page-response.model';
+import { PersonDetailModalService } from '../../../core/services/person-detail-modal.service';
 import { apiErrorMessage } from '../../../core/utils/api-error.utils';
 import { AppIconComponent } from '../../../shared/components/app-icon/app-icon.component';
 
@@ -26,6 +27,7 @@ interface PatientSummary {
 })
 export class PatientListComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly personModal = inject(PersonDetailModalService);
 
   readonly patients = signal<PatientSummary[]>([]);
   readonly error = signal<string | null>(null);
@@ -56,6 +58,10 @@ export class PatientListComponent implements OnInit {
           this.loading.set(false);
         },
       });
+  }
+
+  openDetail(id: string): void {
+    this.personModal.openPatient(id);
   }
 
   avatarColor(name: string): string {

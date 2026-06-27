@@ -197,6 +197,33 @@
   span:first-child {
     font-weight: 600;
   }
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+}
+
+.staff-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.staff-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+
+  &:hover {
+    border-color: var(--primary);
+  }
 }
 
 .actions-bar {

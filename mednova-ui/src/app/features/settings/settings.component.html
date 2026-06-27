@@ -166,6 +166,25 @@
             <span>Journal d'audit</span>
             <a routerLink="/audit" class="btn-ghost">Consulter l'audit</a>
           </div>
+          <div class="admin-item admin-item--full">
+            <span>Infirmier(ère)s</span>
+            @if (loadingNurses()) {
+              <em>Chargement…</em>
+            } @else if (nurses().length === 0) {
+              <em>Aucun compte infirmier</em>
+            } @else {
+              <div class="staff-list">
+                @for (nurse of nurses(); track nurse.id) {
+                  <button type="button" class="staff-chip" (click)="openStaffDetail(nurse.id)">
+                    <span>{{ nurse.firstName }} {{ nurse.lastName }}</span>
+                    <span [class]="nurse.enabled ? 'badge-success' : 'badge-danger'">
+                      {{ nurse.enabled ? 'Actif' : 'Bloqué' }}
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
           <div class="admin-item">
             <span>Notifications</span>
             <a routerLink="/notifications" class="btn-ghost">Centre d'alertes</a>

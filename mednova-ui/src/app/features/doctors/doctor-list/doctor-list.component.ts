@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 import { ApiResponse } from '../../../core/models/api-response.model';
 import { PageResponse } from '../../../core/models/page-response.model';
+import { PersonDetailModalService } from '../../../core/services/person-detail-modal.service';
 import { apiErrorMessage } from '../../../core/utils/api-error.utils';
 import { AppIconComponent } from '../../../shared/components/app-icon/app-icon.component';
 
@@ -38,6 +39,7 @@ const SPECIALTY_LABELS: Record<string, string> = {
 })
 export class DoctorListComponent implements OnInit {
   private readonly http = inject(HttpClient);
+  private readonly personModal = inject(PersonDetailModalService);
 
   readonly doctors = signal<DoctorSummary[]>([]);
   readonly error = signal<string | null>(null);
@@ -71,6 +73,10 @@ export class DoctorListComponent implements OnInit {
     this.loading.set(true);
     this.error.set(null);
     this.load();
+  }
+
+  openDetail(id: string): void {
+    this.personModal.openDoctor(id);
   }
 
   private load(): void {

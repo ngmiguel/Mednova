@@ -10,6 +10,8 @@ import { NavStatsService } from '../../core/services/nav-stats.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { SettingsService, ThemeMode, UiDensity } from '../../core/services/settings.service';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { UserAdminService, UserAccountDetail } from '../../core/services/user-admin.service';
+import { PersonDetailModalService } from '../../core/services/person-detail-modal.service';
 import { TokenStorageService } from '../../core/services/token-storage.service';
 import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
 
@@ -32,6 +34,8 @@ export class SettingsComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly settingsService = inject(SettingsService);
   private readonly tokenStorage = inject(TokenStorageService);
+  private readonly userAdminService = inject(UserAdminService);
+  private readonly personModal = inject(PersonDetailModalService);
   private readonly notificationService = inject(NotificationService);
   private readonly i18n = inject(I18nService);
   readonly authService = inject(AuthService);
@@ -39,6 +43,8 @@ export class SettingsComponent implements OnInit {
 
   readonly twoFactorEnabled = signal<boolean | null>(null);
   readonly gatewayStatus = signal<string | null>(null);
+  readonly nurses = signal<UserAccountDetail[]>([]);
+  readonly loadingNurses = signal(false);
   readonly saved = signal(false);
   readonly checking = signal(false);
 
@@ -60,6 +66,9 @@ export class SettingsComponent implements OnInit {
     }
     this.loadTwoFactorStatus();
     this.checkGatewayHealth();
+    if (this.isAdmin()) {
+      this.loadNurses();
+    }
   }
 
   previewTheme(theme: ThemeMode): void {
@@ -128,6 +137,21 @@ export class SettingsComponent implements OnInit {
 
   openSwagger(): void {
     window.open('/swagger-ui.html', '_blank');
+  }
+
+  openStaffDetail(userId: string): void {
+    this.personModal.openStaff(userId);
+  }
+
+  private loadNurses(): void {
+    this.loadingNurses.set(true);
+    this.userAdminService.listByRole('ROLE_NURSE').subscribe({
+      next: (res) => {
+        this.nurses.set(res.data?.content ?? []);
+        this.loadingNurses.set(false);
+      },
+      error: () => this.loadingNurses.set(false),
+    });
   }
 
   private loadTwoFactorStatus(): void {

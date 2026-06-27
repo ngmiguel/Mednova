@@ -30,7 +30,12 @@
   } @else {
     <div class="entity-grid">
       @for (p of filtered(); track p.id; let i = $index) {
-        <article class="entity-card" [style.animation-delay]="i * 0.05 + 's'">
+        <button
+          type="button"
+          class="entity-card entity-card--clickable"
+          [style.animation-delay]="i * 0.05 + 's'"
+          (click)="openDetail(p.id)"
+        >
           <div class="entity-avatar" [style.background]="avatarColor(p.firstName)">
             {{ p.firstName.charAt(0) }}{{ p.lastName.charAt(0) }}
           </div>
@@ -46,9 +51,10 @@
             @if (p.gender) {
               <span class="badge-neutral"><app-icon name="gender" [size]="12" /> {{ p.gender === 'M' ? 'Homme' : 'Femme' }}</span>
             }
-            <span class="badge-success">Actif</span>
+            <span class="badge-neutral">Dossier</span>
           </div>
-        </article>
+          <span class="card-action">Voir le dossier →</span>
+        </button>
       }
     </div>
   }

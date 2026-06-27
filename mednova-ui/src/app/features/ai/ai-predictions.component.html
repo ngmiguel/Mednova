@@ -1,58 +1,395 @@
 <div class="page">
+
   <header class="page-hero animate-fade-up">
+
     <div>
+
       <h1>{{ 'ai.title' | t }}</h1>
-      <p>Health Risk Engine — scores prédictifs & recommandations cliniques</p>
+
+      <p>{{ 'ai.subtitle' | t }}</p>
+
     </div>
-    <span class="hero-badge">
-      <app-icon name="ai" [size]="16" />
-      {{ 'ai.risk' | t }}
-    </span>
+
+    <div class="hero-actions">
+
+      @if (selectedPatientId()) {
+
+        <button type="button" class="btn-refresh" (click)="refresh()" [disabled]="loading()">
+
+          <app-icon name="refresh" [size]="16" />
+
+          {{ 'ai.refresh' | t }}
+
+        </button>
+
+      }
+
+      <span class="hero-badge">
+
+        <app-icon name="ai" [size]="16" />
+
+        {{ 'ai.risk' | t }}
+
+      </span>
+
+    </div>
+
   </header>
 
-  @if (isStaff() && patients().length) {
-    <div class="patient-picker animate-fade-up">
-      <label>
-        Patient
-        <select [ngModel]="selectedPatientId()" (ngModelChange)="onPatientChange($event)">
-          @for (p of patients(); track p.id) {
-            <option [value]="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+
+
+  @if (isStaff()) {
+
+    <section class="toolbar animate-fade-up">
+
+      <div class="toolbar-field">
+
+        <label for="patient-search">{{ 'ai.searchPatient' | t }}</label>
+
+        <input
+
+          id="patient-search"
+
+          type="search"
+
+          [ngModel]="patientSearch()"
+
+          (ngModelChange)="patientSearch.set($event)"
+
+          [placeholder]="'ai.searchPatientPlaceholder' | t"
+
+          autocomplete="off"
+
+        />
+
+      </div>
+
+      <div class="toolbar-field toolbar-field--grow">
+
+        <label for="patient-select">{{ 'ai.selectPatient' | t }}</label>
+
+        @if (loadingPatients()) {
+
+          <p class="toolbar-hint">{{ 'common.loading' | t }}</p>
+
+        } @else if (filteredPatients().length === 0) {
+
+          <p class="toolbar-hint">{{ 'ai.noPatients' | t }}</p>
+
+        } @else {
+
+          <select
+
+            id="patient-select"
+
+            [ngModel]="selectedPatientId()"
+
+            (ngModelChange)="onPatientChange($event)"
+
+          >
+
+            @for (p of filteredPatients(); track p.id) {
+
+              <option [value]="p.id">{{ p.firstName }} {{ p.lastName }}</option>
+
+            }
+
+          </select>
+
+          @if (selectedPatientId()) {
+            <button type="button" class="btn-profile" (click)="openSelectedPatientDetail()">
+              <app-icon name="user" [size]="16" />
+              {{ 'modal.viewProfile' | t }}
+            </button>
           }
-        </select>
-      </label>
+
+        }
+
+      </div>
+
+    </section>
+
+  } @else if (isPatient()) {
+
+    <div class="patient-banner animate-fade-up">
+
+      <app-icon name="patients" [size]="20" />
+
+      <div>
+
+        <strong>{{ 'ai.patientBanner' | t }}</strong>
+
+        @if (selectedPatientLabel()) {
+
+          <span>{{ selectedPatientLabel() }}</span>
+
+        }
+
+      </div>
+
     </div>
+
   }
 
+
+
   @if (loading()) {
+
     <div class="loading-state">
+
       <div class="spinner"></div>
+
       <p>{{ 'common.loading' | t }}</p>
+
     </div>
+
   } @else if (error()) {
-    <div class="error-state">{{ error() }}</div>
-  } @else if (assessments().length === 0) {
-    <div class="empty-state">
-      <app-icon name="ai" [size]="48" />
-      <p>Aucune évaluation IA pour ce patient</p>
-    </div>
-  } @else {
-    <div class="risk-grid">
-      @for (a of assessments(); track a.id; let i = $index) {
-        <article class="risk-card animate-fade-up" [style.animation-delay]="i * 0.05 + 's'">
-          <div class="risk-score" [class]="'level-' + a.riskLevel">{{ a.riskScore }}</div>
-          <div class="risk-body">
-            <div class="risk-head">
-              <span [class]="levelClass(a.riskLevel)">{{ a.riskLevel }}</span>
-              <time>{{ a.assessedAt | date: 'dd/MM/yyyy HH:mm' }}</time>
-            </div>
-            <p class="factors">{{ (a.factors || []).join(' · ') }}</p>
-            <p class="reco"><strong>{{ 'ai.recommendation' | t }} :</strong> {{ a.recommendation }}</p>
-            @if (a.triggerEventType) {
-              <span class="trigger">{{ a.triggerEventType }}</span>
-            }
-          </div>
-        </article>
+
+    <div class="error-state">
+
+      <p>{{ error() }}</p>
+
+      @if (selectedPatientId()) {
+
+        <button type="button" class="btn-retry" (click)="refresh()">{{ 'common.retry' | t }}</button>
+
       }
+
     </div>
+
+  } @else if (assessments().length === 0) {
+
+    <div class="empty-state">
+
+      <app-icon name="ai" [size]="48" />
+
+      <p>{{ 'ai.empty' | t }}</p>
+
+      <small>{{ 'ai.emptyHint' | t }}</small>
+
+    </div>
+
+  } @else {
+
+    @if (latestAssessment(); as latest) {
+
+      <section class="latest-panel animate-fade-up">
+
+        <div class="latest-header">
+
+          <span class="latest-tag">{{ 'ai.latest' | t }}</span>
+
+          <time>{{ latest.assessedAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+
+        </div>
+
+        <div class="latest-body">
+
+          <div class="risk-score large" [class]="'level-' + latest.riskLevel">{{ latest.riskScore }}</div>
+
+          <div class="latest-details">
+
+            <div class="latest-meta">
+
+              <span [class]="levelClass(latest.riskLevel)">{{ levelLabel(latest.riskLevel) }}</span>
+
+              <span class="score-caption">{{ 'ai.score' | t }} / 100</span>
+
+            </div>
+
+            <ul class="factor-list">
+
+              @for (factor of latest.factors || []; track factor) {
+
+                <li>{{ factor }}</li>
+
+              }
+
+            </ul>
+
+            <p class="reco">
+
+              <strong>{{ 'ai.recommendation' | t }} :</strong> {{ latest.recommendation }}
+
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    }
+
+
+
+    <div class="section-head animate-fade-up">
+
+      <h2>{{ 'ai.history' | t }}</h2>
+
+      <span class="count-badge">{{ displayedAssessments().length }} {{ 'ai.evaluations' | t }}</span>
+
+    </div>
+
+
+
+    <div class="filter-chips animate-fade-up">
+
+      <button type="button" [class.active]="levelFilter() === 'ALL'" (click)="setLevelFilter('ALL')">
+
+        {{ 'ai.filter.all' | t }}
+
+      </button>
+
+      <button
+
+        type="button"
+
+        [class.active]="levelFilter() === 'ALERT'"
+
+        (click)="setLevelFilter('ALERT')"
+
+      >
+
+        {{ 'ai.filter.alert' | t }}
+
+        @if (alertCount() > 0) {
+
+          <span class="chip-count">{{ alertCount() }}</span>
+
+        }
+
+      </button>
+
+      <button
+
+        type="button"
+
+        [class.active]="levelFilter() === 'CRITICAL'"
+
+        (click)="setLevelFilter('CRITICAL')"
+
+      >
+
+        {{ levelLabel('CRITICAL') }}
+
+      </button>
+
+      <button type="button" [class.active]="levelFilter() === 'HIGH'" (click)="setLevelFilter('HIGH')">
+
+        {{ levelLabel('HIGH') }}
+
+      </button>
+
+      <button
+
+        type="button"
+
+        [class.active]="levelFilter() === 'MODERATE'"
+
+        (click)="setLevelFilter('MODERATE')"
+
+      >
+
+        {{ levelLabel('MODERATE') }}
+
+      </button>
+
+      <button type="button" [class.active]="levelFilter() === 'LOW'" (click)="setLevelFilter('LOW')">
+
+        {{ levelLabel('LOW') }}
+
+      </button>
+
+    </div>
+
+
+
+    @if (displayedAssessments().length === 0) {
+
+      <div class="empty-state compact">
+
+        <p>{{ 'ai.emptyFilter' | t }}</p>
+
+        <button type="button" class="btn-retry" (click)="setLevelFilter('ALL')">
+
+          {{ 'ai.filter.all' | t }}
+
+        </button>
+
+      </div>
+
+    } @else {
+
+      <div class="risk-grid">
+
+        @for (a of displayedAssessments(); track a.id; let i = $index) {
+
+          <article
+
+            class="risk-card animate-fade-up"
+
+            [class.is-latest]="a.id === latestAssessment()?.id"
+
+            [style.animation-delay]="i * 0.04 + 's'"
+
+          >
+
+            <div class="risk-score" [class]="'level-' + a.riskLevel">{{ a.riskScore }}</div>
+
+            <div class="risk-body">
+
+              <div class="risk-head">
+
+                <div class="risk-head-left">
+
+                  <span [class]="levelClass(a.riskLevel)">{{ levelLabel(a.riskLevel) }}</span>
+
+                  @if (a.id === latestAssessment()?.id) {
+
+                    <span class="latest-pill">{{ 'ai.latest' | t }}</span>
+
+                  }
+
+                </div>
+
+                <time>{{ a.assessedAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+
+              </div>
+
+              <ul class="factor-list compact">
+
+                @for (factor of a.factors || []; track factor) {
+
+                  <li>{{ factor }}</li>
+
+                }
+
+              </ul>
+
+              <p class="reco">
+
+                <strong>{{ 'ai.recommendation' | t }} :</strong> {{ a.recommendation }}
+
+              </p>
+
+              @if (a.triggerEventType) {
+
+                <span class="trigger">{{ a.triggerEventType }}</span>
+
+              }
+
+            </div>
+
+          </article>
+
+        }
+
+      </div>
+
+    }
+
   }
+
 </div>
+

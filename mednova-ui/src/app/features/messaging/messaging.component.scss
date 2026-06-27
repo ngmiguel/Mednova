@@ -164,6 +164,11 @@
   border-bottom: 1px solid var(--border);
   background: var(--bg-elevated);
 
+  .wa-chat-title {
+    flex: 1;
+    min-width: 0;
+  }
+
   strong {
     display: block;
     font-size: 0.95rem;
@@ -173,6 +178,25 @@
   small {
     font-size: 0.75rem;
     color: var(--text-muted);
+  }
+}
+
+.wa-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--primary);
+    border-color: var(--primary);
   }
 }
 

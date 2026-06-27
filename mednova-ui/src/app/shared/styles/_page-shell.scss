@@ -176,6 +176,31 @@
   }
 }
 
+.entity-card--clickable {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: inherit;
+
+  &:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .card-action {
+    display: block;
+    margin-top: 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+}
+
 .badge-success {
   @include badge(rgba(16, 185, 129, 0.15), #059669);
 }

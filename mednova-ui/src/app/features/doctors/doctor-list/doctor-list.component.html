@@ -47,7 +47,12 @@
   } @else {
     <div class="entity-grid">
       @for (d of filtered(); track d.id; let i = $index) {
-        <article class="entity-card" [style.animation-delay]="i * 0.05 + 's'">
+        <button
+          type="button"
+          class="entity-card entity-card--clickable"
+          [style.animation-delay]="i * 0.05 + 's'"
+          (click)="openDetail(d.id)"
+        >
           <div class="entity-avatar" [style.background]="avatarColor(d.firstName)">
             {{ d.firstName.charAt(0) }}{{ d.lastName.charAt(0) }}
           </div>
@@ -59,7 +64,8 @@
               {{ d.active !== false ? 'Disponible' : 'Inactif' }}
             </span>
           </div>
-        </article>
+          <span class="card-action">Voir le profil →</span>
+        </button>
       }
     </div>
   }
