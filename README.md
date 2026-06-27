@@ -16,6 +16,8 @@ MedNova AI est une plateforme de santé capable de :
 - Gérer les rendez-vous et le planning médical
 - Surveiller les patients via WebSocket
 - Générer des alertes et notifications automatiques
+- Échanger via messagerie sécurisée patient ↔ médecin
+- Administrer les comptes utilisateurs (blocage / réactivation d'accès)
 
 ## Architecture
 
@@ -28,7 +30,10 @@ API Gateway (8080)  ← Point d'entrée unique
     ├── Monitoring Service    (8085)  ✅
     ├── AI Prediction Service (8086)  ✅
     ├── Notification Service  (8087)  ✅
-    └── Audit Service         (8088)  ✅
+    ├── Audit Service         (8088)  ✅
+    └── Messaging Service     (8089)  ✅
+
+mednova-ui (4200)     ← Interface Angular (RBAC, i18n FR/EN)
 ```
 
 ## Stack technique
@@ -36,6 +41,7 @@ API Gateway (8080)  ← Point d'entrée unique
 | Catégorie | Technologies |
 |-----------|-------------|
 | Backend | Spring Boot 3.4, Spring Cloud Gateway, Spring Security JWT |
+| Frontend | Angular 19 (SPA `mednova-ui`) |
 | Base de données | PostgreSQL 16 (port 5433) |
 | Cache | Redis 7 |
 | Messaging | Apache Kafka 7.6 |
@@ -58,10 +64,13 @@ mednova-ai/
 ├── ai-prediction-service/   # Health Risk Engine
 ├── notification-service/    # Alertes et emails
 ├── audit-service/           # Logs d'audit conformité
+├── messaging-service/       # Messagerie patient ↔ médecin
+├── mednova-ui/              # Interface Angular (core / features / layout)
 ├── docker-compose.yml       # Infrastructure locale
 └── docs/                    # Documentation
     ├── API.md               # Documentation des endpoints
-    └── ARCHITECTURE.md      # Diagrammes et flux événementiels
+    ├── ARCHITECTURE.md      # Diagrammes et flux événementiels
+    └── FRONTEND.md          # Guide Angular
 ```
 
 Chaque microservice suit la **Clean Architecture** :
@@ -109,6 +118,7 @@ Responsable de l'exploitation et de la gouvernance de la plateforme.
 
 - Créer et supprimer des profils **médecins**
 - Créer, modifier et **supprimer** des dossiers **patients**
+- **Bloquer ou réactiver** l'accès plateforme d'un utilisateur (`/api/v1/auth/users/{id}/access`)
 - Créer, modifier, confirmer, annuler et **supprimer** des **rendez-vous**
 - Enregistrer des **constantes vitales** (monitoring)
 - Consulter les **évaluations de risque AI**, les **notifications staff** et le **journal d'audit**
@@ -224,6 +234,24 @@ Légende : ✅ autorisé · 🔒 limité (ses propres données) · ❌ refusé
 |--------|:-----:|:------:|:-----:|:-------:|:-------:|
 | Consulter le journal Kafka | ✅ | ❌ | ❌ | ❌ | ✅ |
 
+#### Administration utilisateurs (`/api/v1/auth/users/**` — ADMIN uniquement)
+
+| Action | ADMIN | DOCTOR | NURSE | PATIENT | AUDITOR |
+|--------|:-----:|:------:|:-----:|:-------:|:-------:|
+| Lister les utilisateurs (filtrable par rôle) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Consulter un compte | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Bloquer / réactiver l'accès (`enabled`) | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+> Un compte bloqué ne peut plus se connecter ; ses refresh tokens sont révoqués.
+
+#### Messagerie (`/api/v1/messaging/**`)
+
+| Action | ADMIN | DOCTOR | NURSE | PATIENT | AUDITOR |
+|--------|:-----:|:------:|:-----:|:-------:|:-------:|
+| Conversations patient ↔ médecin | ✅ | ✅ | ✅ | ✅ | ❌ |
+
+> L'interface Angular limite la messagerie aux rôles **Médecin** et **Patient** ; l'API autorise aussi Admin et Infirmier.
+
 ### Créer un compte avec un rôle
 
 Lors de l'inscription, le rôle est choisi dans le champ `role` :
@@ -241,6 +269,22 @@ curl -X POST http://localhost:8080/api/v1/auth/register \
 ```
 
 **Rôles disponibles :** `ROLE_ADMIN`, `ROLE_DOCTOR`, `ROLE_NURSE`, `ROLE_PATIENT`, `ROLE_AUDITOR`
+
+### Bloquer l'accès d'un utilisateur (ADMIN)
+
+```bash
+# Désactiver un compte
+curl -X PATCH http://localhost:8080/api/v1/auth/users/{userId}/access \
+  -H "Authorization: Bearer <token_admin>" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+
+# Réactiver un compte
+curl -X PATCH http://localhost:8080/api/v1/auth/users/{userId}/access \
+  -H "Authorization: Bearer <token_admin>" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": true}'
+```
 
 ## Prérequis
 
@@ -291,6 +335,12 @@ mvn -pl ai-prediction-service spring-boot:run
 
 # 13. Lancer Notification Service (dans un autre terminal)
 mvn -pl notification-service spring-boot:run
+
+# 14. Lancer Messaging Service (dans un autre terminal)
+mvn -pl messaging-service spring-boot:run
+
+# 15. Lancer l'interface Angular (dans un autre terminal)
+cd mednova-ui && npm install && npm start
 ```
 
 ## Documentation API
@@ -350,6 +400,8 @@ curl -X POST http://localhost:8080/api/v1/patients \
 - [x] AI Prediction Service (Health Risk Engine)
 - [x] Notification Service
 - [x] Audit Service (consumer Kafka + journal)
+- [x] Messaging Service (chat patient ↔ médecin)
+- [x] Interface Angular (`mednova-ui`) — RBAC, i18n, modales profil
 - [x] Tests + CI/CD
 
 ## Tests et CI/CD
@@ -376,9 +428,9 @@ curl -X POST http://localhost:8080/api/v1/patients \
 |--------|-------------|
 | `test-build.sh` | Compile tous les modules (`mvn package -DskipTests`) |
 | `test-module.sh <module>` | **Tous** les tests du module (+ common-lib via `-am`) |
-| `run-all.sh` | Build + tests des **10 modules** |
+| `run-all.sh` | Build + tests des **11 modules** |
 
-Modules testés : `common-lib`, `api-gateway`, `auth-service`, `patient-service`, `doctor-service`, `appointment-service`, `monitoring-service`, `ai-prediction-service`, `notification-service`, `audit-service`.
+Modules testés : `common-lib`, `api-gateway`, `auth-service`, `patient-service`, `doctor-service`, `appointment-service`, `monitoring-service`, `ai-prediction-service`, `notification-service`, `audit-service`, `messaging-service`.
 
 ### Couverture actuelle (~36 tests unitaires)
 
@@ -417,13 +469,48 @@ MAIL_STAFF_ALERT_TO=medecin@mednova.ai
 
 ## Frontend Angular (`mednova-ui`)
 
-Application SPA Angular 19 — structure entreprise (core / features / layout), déployable via Docker + Nginx.
+Application SPA **Angular 19** — structure entreprise (`core` / `features` / `layout` / `shared`), déployable via Docker + Nginx.
 
 ```bash
 cd mednova-ui && npm install && npm start   # dev → http://localhost:4200
 ```
 
 Guide complet : [docs/FRONTEND.md](docs/FRONTEND.md)
+
+### Navigation et RBAC
+
+Chaque module de la sidebar est visible **uniquement pour les rôles autorisés** (routes protégées + filtrage UI). La configuration centralisée se trouve dans `mednova-ui/src/app/core/config/module-roles.ts`.
+
+| Module UI | Rôles autorisés |
+|-----------|-----------------|
+| Patients | Admin, Médecin, Infirmier, Auditeur |
+| Médecins | Tous |
+| Rendez-vous | Tous |
+| Messagerie | Médecin, Patient |
+| IA Prédictive | Tous (données limitées pour le patient) |
+| Notifications | Tous |
+| Audit | Admin, Auditeur |
+| Paramètres | Tous |
+
+### Fiches détaillées (modales)
+
+Un clic sur une personne ouvre une **modale** avec l'ensemble de ses informations :
+
+| Contexte | Action |
+|----------|--------|
+| Liste **Patients** | Fiche dossier complet |
+| Liste **Médecins** | Fiche profil médecin |
+| **Messagerie** | Bouton profil dans l'en-tête du chat |
+| **IA Prédictive** | Bouton « Voir la fiche » (staff) |
+| **Paramètres → Admin** | Liste des infirmier(ère)s |
+
+Seul l'**administrateur** voit les actions **Bloquer l'accès** / **Réactiver l'accès** (appel à `PATCH /api/v1/auth/users/{id}/access`). Les autres rôles consultent en lecture seule.
+
+### Section IA Prédictive
+
+- Dernière évaluation mise en avant (score, facteurs, recommandation)
+- Filtres par niveau de risque (Tous, Alertes, Faible → Critique)
+- Recherche patient et historique paginé (staff)
 
 ## Déploiement Docker (stack complète)
 
@@ -474,12 +561,15 @@ docker compose down -v
 |----------|-------------|
 | [docs/API.md](docs/API.md) | Endpoints REST détaillés |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Diagrammes, flux Kafka, Clean Architecture |
+| [docs/FRONTEND.md](docs/FRONTEND.md) | Guide Angular, comptes démo, déploiement |
 | [scripts/demo-flow.ps1](scripts/demo-flow.ps1) | Démo automatisée vitals → AI → notification → audit |
 
 ## Roadmap — Phase 2
 
 - [x] Containerisation Docker des microservices
 - [x] Documentation architecture + script de démo
+- [x] RBAC frontend (sidebar, routes, modales profil)
+- [x] API admin blocage d'accès utilisateur
 - [ ] Manifests Kubernetes
 - [ ] Tests d'intégration (Testcontainers)
 - [ ] Extraction `GatewayUserAuthentication` dans `common-lib`
