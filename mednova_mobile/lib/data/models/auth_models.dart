@@ -52,6 +52,8 @@ class UserProfile {
         twoFactorEnabled: json['twoFactorEnabled'] as bool? ?? false,
       );
 
+  factory UserProfile.fromStorage(Map<String, dynamic> json) => UserProfile.fromJson(json);
+
   final String id;
   final String email;
   final String firstName;
@@ -63,6 +65,15 @@ class UserProfile {
 
   List<UserRole> get parsedRoles =>
       roles.map(UserRole.fromString).whereType<UserRole>().toList();
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'roles': roles,
+        'twoFactorEnabled': twoFactorEnabled,
+      };
 }
 
 class DemoAccount {
@@ -70,17 +81,69 @@ class DemoAccount {
     required this.label,
     required this.email,
     required this.password,
+    required this.role,
+    required this.userId,
+    required this.firstName,
+    required this.lastName,
+    this.twoFactorEnabled = false,
   });
 
   final String label;
   final String email;
   final String password;
+  final UserRole role;
+  final String userId;
+  final String firstName;
+  final String lastName;
+  final bool twoFactorEnabled;
 }
 
 const demoAccounts = [
-  DemoAccount(label: 'Admin', email: 'admin@mednova.ai', password: 'password123'),
-  DemoAccount(label: 'Médecin', email: 'dr.smith@mednova.ai', password: 'password123'),
-  DemoAccount(label: 'Infirmier', email: 'nurse@mednova.ai', password: 'password123'),
-  DemoAccount(label: 'Patient', email: 'patient.test@mednova.ai', password: 'password123'),
-  DemoAccount(label: 'Auditeur', email: 'auditor@mednova.ai', password: 'password123'),
+  DemoAccount(
+    label: 'Admin',
+    email: 'admin@mednova.ai',
+    password: 'password123',
+    role: UserRole.admin,
+    userId: 'user-admin',
+    firstName: 'Alice',
+    lastName: 'Admin',
+    twoFactorEnabled: true,
+  ),
+  DemoAccount(
+    label: 'Médecin',
+    email: 'dr.smith@mednova.ai',
+    password: 'password123',
+    role: UserRole.doctor,
+    userId: 'user-doctor',
+    firstName: 'John',
+    lastName: 'Smith',
+  ),
+  DemoAccount(
+    label: 'Infirmier',
+    email: 'nurse@mednova.ai',
+    password: 'password123',
+    role: UserRole.nurse,
+    userId: 'user-nurse',
+    firstName: 'Emma',
+    lastName: 'Wilson',
+  ),
+  DemoAccount(
+    label: 'Patient',
+    email: 'patient.test@mednova.ai',
+    password: 'password123',
+    role: UserRole.patient,
+    userId: 'user-patient',
+    firstName: 'Marie',
+    lastName: 'Dupont',
+  ),
+  DemoAccount(
+    label: 'Auditeur',
+    email: 'auditor@mednova.ai',
+    password: 'password123',
+    role: UserRole.auditor,
+    userId: 'user-auditor',
+    firstName: 'Paul',
+    lastName: 'Audit',
+    twoFactorEnabled: true,
+  ),
 ];

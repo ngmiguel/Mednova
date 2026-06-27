@@ -5,9 +5,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/animations/mednova_3d_scene.dart';
+import '../../../core/storage/token_storage.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/auth_models.dart';
 import '../../providers/auth_notifier.dart';
+import '../../providers/settings_provider.dart';
 import '../../shared/mednova_page_scaffold.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -32,6 +34,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
+    _loadRememberedEmail();
+  }
+
+  Future<void> _loadRememberedEmail() async {
+    final settings = ref.read(settingsProvider).settings;
+    if (!settings.rememberEmail) return;
+    final email = await ref.read(tokenStorageProvider).getRememberedEmail();
+    if (email != null && mounted) {
+      _emailCtrl.text = email;
+    }
   }
 
   @override
@@ -44,10 +56,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    await ref.read(authProvider.notifier).login(
-          _emailCtrl.text.trim(),
-          _passwordCtrl.text,
-        );
+    final email = _emailCtrl.text.trim();
+    await ref.read(authProvider.notifier).login(email, _passwordCtrl.text);
+    final settings = ref.read(settingsProvider).settings;
+    if (settings.rememberEmail) {
+      await ref.read(tokenStorageProvider).saveRememberedEmail(email);
+    }
   }
 
   @override
@@ -55,7 +69,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final authAsync = ref.watch(authProvider);
     final loading = authAsync.isLoading;
     final error = authAsync.hasError
-        ? authAsync.error.toString().replaceFirst('Exception: ', '')
+        ? authAsync.error.toString().replaceFirst('Exception: ', '').replaceFirst('DioException [connection error]: ', '')
         : null;
 
     return Scaffold(
@@ -125,7 +139,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         if (error != null) ...[
                           const SizedBox(height: 12),
-                          Text(error, style: const TextStyle(color: AppColors.danger)),
+                          Text(
+                            error.contains('connection') || error.contains('XMLHttpRequest')
+                                ? 'Backend indisponible — utilisez les comptes démo ci-dessous'
+                                : error,
+                            style: const TextStyle(color: AppColors.danger),
+                          ),
                         ],
                         const SizedBox(height: 24),
                         AnimatedBuilder(
@@ -150,11 +169,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   ),
                 ).animate(delay: 450.ms).fadeIn().slideY(begin: 0.2),
                 const SizedBox(height: 28),
-                Text(
-                  'Comptes démo — touchez pour connexion instantanée',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: AppColors.textMuted,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.auroraGold.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.auroraGold.withValues(alpha: 0.3)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.offline_bolt, color: AppColors.auroraGold, size: 20),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Comptes démo — connexion instantanée sans backend',
+                          style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                        ),
                       ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Wrap(
