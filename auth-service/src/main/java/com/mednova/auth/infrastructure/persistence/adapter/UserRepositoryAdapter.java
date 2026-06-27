@@ -12,6 +12,8 @@ import com.mednova.auth.infrastructure.persistence.repository.RoleJpaRepository;
 import com.mednova.auth.infrastructure.persistence.repository.UserJpaRepository;
 import com.mednova.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,6 +58,18 @@ public class UserRepositoryAdapter implements UserRepository {
     @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return userJpaRepository.existsByEmail(email);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<User> findAll(Pageable pageable) {
+        return userJpaRepository.findAll(pageable).map(persistenceMapper::toDomain);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<User> findByRole(RoleType role, Pageable pageable) {
+        return userJpaRepository.findByRoleName(role, pageable).map(persistenceMapper::toDomain);
     }
 
     private RoleEntity loadRole(RoleType roleType) {
