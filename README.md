@@ -41,7 +41,8 @@ mednova-ui (4200)     ← Interface Angular (RBAC, i18n FR/EN)
 | Catégorie | Technologies |
 |-----------|-------------|
 | Backend | Spring Boot 3.4, Spring Cloud Gateway, Spring Security JWT |
-| Frontend | Angular 19 (SPA `mednova-ui`) |
+| Frontend Web | Angular 19 (SPA `mednova-ui`) |
+| Frontend Mobile | Flutter 3 (`mednova_mobile`) |
 | Base de données | PostgreSQL 16 (port 5433) |
 | Cache | Redis 7 |
 | Messaging | Apache Kafka 7.6 |
@@ -66,6 +67,7 @@ mednova-ai/
 ├── audit-service/           # Logs d'audit conformité
 ├── messaging-service/       # Messagerie patient ↔ médecin
 ├── mednova-ui/              # Interface Angular (core / features / layout)
+├── mednova_mobile/          # Application Flutter (iOS / Android)
 ├── docker-compose.yml       # Infrastructure locale
 └── docs/                    # Documentation
     ├── API.md               # Documentation des endpoints
@@ -511,6 +513,35 @@ Seul l'**administrateur** voit les actions **Bloquer l'accès** / **Réactiver l
 - Dernière évaluation mise en avant (score, facteurs, recommandation)
 - Filtres par niveau de risque (Tous, Alertes, Faible → Critique)
 - Recherche patient et historique paginé (staff)
+
+## Frontend Mobile (`mednova_mobile`)
+
+Application **Flutter** — architecture Clean (core / domain / data / presentation), UI Aurora avec animations 3D, connectée à la même API Gateway.
+
+```bash
+cd mednova_mobile
+flutter pub get
+flutter run
+```
+
+| Plateforme | URL API Gateway |
+|------------|-----------------|
+| Android (émulateur) | `http://10.0.2.2:8080/api/v1` |
+| iOS / desktop / web dev | `http://localhost:8080/api/v1` |
+
+**Prérequis :** stack backend démarrée (`docker compose up` ou services locaux sur le port 8080).
+
+### Fonctionnalités mobile
+
+| Module | Description |
+|--------|-------------|
+| Auth + RBAC | Connexion JWT, navigation filtrée par rôle, comptes démo |
+| Fiches détaillées | Bottom sheet patient/médecin (admin : bloquer/réactiver accès) |
+| Messagerie | Liste contacts + fil de chat avec polling temps réel (4 s) |
+| IA Prédictive | Sélection patient, historique des évaluations, lien fiche |
+| 9 modules | Dashboard, Patients, Médecins, RDV, IA, Messages, Alertes, Audit, Réglages |
+
+Guide détaillé : [mednova_mobile/README.md](mednova_mobile/README.md)
 
 ## Déploiement Docker (stack complète)
 
