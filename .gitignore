@@ -44,6 +44,8 @@ bin/
 
 # IDE — VS Code
 .vscode/
+!mednova_mobile/.vscode/
+!mednova_mobile/.vscode/launch.json
 
 # OS
 .DS_Store
