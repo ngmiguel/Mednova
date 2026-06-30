@@ -1,0 +1,54 @@
+// MedNova brand tokens — aligned with mednova_mobile (AppColors / MedNovaPalette)
+
+$aurora-teal: #14b8a6;
+$aurora-cyan: #22d3ee;
+$aurora-violet: #8b5cf6;
+$aurora-pink: #ec4899;
+$aurora-gold: #f59e0b;
+$void-black: #050810;
+$deep-space: #0a0f1e;
+$nebula: #121a32;
+
+@mixin aurora-gradient-text {
+  background: linear-gradient(135deg, $aurora-teal 0%, $aurora-cyan 30%, $aurora-violet 70%, $aurora-pink 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@mixin aurora-hero-bg {
+  background: linear-gradient(135deg, $aurora-teal 0%, #0f766e 22%, $aurora-violet 58%, $aurora-pink 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 10s ease infinite;
+}
+
+@mixin parallax-page-bg-light {
+  background-color: #eff6ff;
+  background-image:
+    radial-gradient(ellipse at 12% 0%, rgba(45, 212, 191, 0.18) 0%, transparent 48%),
+    radial-gradient(ellipse at 88% 8%, rgba(167, 139, 250, 0.14) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 100%, rgba(244, 114, 182, 0.1) 0%, transparent 50%),
+    linear-gradient(180deg, #eff6ff 0%, #e0e7ff 45%, #fdf2f8 100%);
+}
+
+@mixin parallax-page-bg-dark {
+  background-color: $void-black;
+  background-image:
+    radial-gradient(ellipse at 15% 0%, rgba(20, 184, 166, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 100%, rgba(139, 92, 246, 0.1) 0%, transparent 45%),
+    linear-gradient(180deg, $void-black 0%, $deep-space 50%, $nebula 100%);
+}
+
+@mixin glass-card-light {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.88) 55%, rgba(237, 233, 254, 0.85) 100%);
+  border: 1px solid rgba(20, 184, 166, 0.22);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.1);
+  backdrop-filter: blur(12px);
+}
+
+@mixin glass-card-dark {
+  background: linear-gradient(145deg, rgba(26, 34, 56, 0.92) 0%, rgba(15, 21, 36, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+}

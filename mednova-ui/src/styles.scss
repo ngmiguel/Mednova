@@ -1,15 +1,16 @@
 @use './app/shared/styles/theme' as theme;
+@use './app/shared/styles/mednova-brand' as brand;
 
 :root,
 html.theme-light {
   @include theme.theme-light;
-  --primary: #0d9488;
+  --primary: #{brand.$aurora-teal};
   --primary-dark: #0f766e;
-  --primary-light: #14b8a6;
-  --accent: #6366f1;
-  --accent-glow: rgba(99, 102, 241, 0.35);
+  --primary-light: #{brand.$aurora-cyan};
+  --accent: #{brand.$aurora-violet};
+  --accent-glow: rgba(139, 92, 246, 0.35);
   --success: #10b981;
-  --warning: #f59e0b;
+  --warning: #{brand.$aurora-gold};
   --danger: #ef4444;
   --radius: 16px;
   --radius-lg: 24px;
@@ -18,11 +19,11 @@ html.theme-light {
 
 html.theme-dark {
   @include theme.theme-dark;
-  --primary: #2dd4bf;
-  --primary-dark: #14b8a6;
+  --primary: #{brand.$aurora-cyan};
+  --primary-dark: #{brand.$aurora-teal};
   --primary-light: #5eead4;
-  --accent: #818cf8;
-  --accent-glow: rgba(129, 140, 248, 0.35);
+  --accent: #a78bfa;
+  --accent-glow: rgba(167, 139, 250, 0.35);
   --success: #34d399;
   --warning: #fbbf24;
   --danger: #f87171;
@@ -178,10 +179,30 @@ html.density-compact .page {
   padding: 1.25rem 1.5rem 2rem;
 }
 
+html.theme-light .content {
+  @include brand.parallax-page-bg-light;
+}
+
 html.theme-dark .content {
-  background-image:
-    radial-gradient(ellipse at 15% 0%, rgba(20, 184, 166, 0.08) 0%, transparent 45%),
-    radial-gradient(ellipse at 85% 100%, rgba(99, 102, 241, 0.06) 0%, transparent 45%);
+  @include brand.parallax-page-bg-dark;
+}
+
+.aurora-title {
+  @include brand.aurora-gradient-text;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+html.theme-light .entity-card,
+html.theme-light .stat-card,
+html.theme-light .module-card {
+  @include brand.glass-card-light;
+}
+
+html.theme-dark .entity-card,
+html.theme-dark .stat-card,
+html.theme-dark .module-card {
+  @include brand.glass-card-dark;
 }
 
 html.theme-dark .error-state {

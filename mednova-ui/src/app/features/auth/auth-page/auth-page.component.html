@@ -1,11 +1,14 @@
 <div class="auth-layout">
   <aside class="hero-panel">
-    <div class="hero-bg"></div>
+    <div class="hero-bg">
+      <span class="hero-orb hero-orb--1"></span>
+      <span class="hero-orb hero-orb--2"></span>
+      <span class="hero-orb hero-orb--3"></span>
+    </div>
     <div class="hero-content animate-in">
-      <img src="assets/logo.png" alt="MedNova" class="hero-logo" width="72" height="72" />
-      <img src="assets/auth-hero.svg" alt="" class="hero-image" />
-      <h1>MedNova AI</h1>
-      <p>Santé prédictive intelligente pour professionnels et patients.</p>
+      <img src="assets/logo.svg" alt="MedNova AI" class="hero-logo" width="120" height="120" />
+      <h1 class="aurora-title">MedNova AI</h1>
+      <p>Santé prédictive · Interface nouvelle génération</p>
     </div>
   </aside>
 
@@ -21,6 +24,7 @@
       @switch (view()) {
         @case ('login') {
           <header class="form-header">
+            <img src="assets/logo.svg" alt="" class="form-logo" width="48" height="48" />
             <h2>Bienvenue</h2>
             <p>Connectez-vous à votre espace</p>
           </header>
