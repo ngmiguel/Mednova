@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/animations/mednova_3d_scene.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/mednova_palette.dart';
 import '../providers/settings_provider.dart';
 
 /// Standard page wrapper: parallax 3D background + animated header + content.
@@ -31,6 +32,7 @@ class MedNovaPageScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final animations = ref.watch(animationsEnabledProvider);
     final padding = ref.watch(pagePaddingProvider);
+    final palette = MedNovaPalette.of(context);
 
     return Parallax3DBackground(
       child: SafeArea(
@@ -72,7 +74,7 @@ class MedNovaPageScaffold extends ConsumerWidget {
                             Text(
                               subtitle,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: AppColors.textMuted,
+                                    color: palette.textMuted,
                                   ),
                             ),
                             fadeSlideY: true,

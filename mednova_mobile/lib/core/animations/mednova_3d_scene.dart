@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import '../theme/mednova_palette.dart';
 
 /// Rotating 3D medical orb — core visual signature of MedNova Mobile.
 class MedNova3DOrb extends StatefulWidget {
@@ -237,6 +238,7 @@ class _Floating3DCardState extends State<Floating3DCard>
 
   @override
   Widget build(BuildContext context) {
+    final palette = MedNovaPalette.of(context);
     return AnimatedBuilder(
       animation: _floatController,
       builder: (context, child) {
@@ -262,13 +264,13 @@ class _Floating3DCardState extends State<Floating3DCard>
             child: Container(
               padding: widget.padding,
               decoration: BoxDecoration(
-                gradient: AppColors.cardGradient,
+                gradient: palette.cardGradient,
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppColors.glassBorder),
+                border: Border.all(color: palette.glassBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.auroraTeal.withValues(alpha: 0.12),
-                    blurRadius: 24,
+                    color: palette.cardShadow.withValues(alpha: palette.isDark ? 0.12 : 0.18),
+                    blurRadius: palette.isDark ? 24 : 20,
                     offset: Offset(_tilt.dx * -20, _tilt.dy * -20 + 8),
                   ),
                 ],
@@ -395,6 +397,7 @@ class _Parallax3DBackgroundState extends State<Parallax3DBackground>
 
   @override
   Widget build(BuildContext context) {
+    final palette = MedNovaPalette.of(context);
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -402,11 +405,11 @@ class _Parallax3DBackgroundState extends State<Parallax3DBackground>
         return Stack(
           children: [
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [AppColors.voidBlack, AppColors.deepSpace, AppColors.nebula],
+                  colors: palette.scaffoldGradient,
                 ),
               ),
             ),
@@ -428,13 +431,8 @@ class _Parallax3DBackgroundState extends State<Parallax3DBackground>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          [
-                            AppColors.auroraTeal,
-                            AppColors.auroraViolet,
-                            AppColors.auroraPink,
-                            AppColors.auroraCyan,
-                          ][i % 4]
-                              .withValues(alpha: 0.08),
+                          palette.parallaxOrbColors[i % 4]
+                              .withValues(alpha: palette.isDark ? 0.08 : 0.16),
                           Colors.transparent,
                         ],
                       ),

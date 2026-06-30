@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/mednova_palette.dart';
 import '../providers/auth_notifier.dart';
 import '../providers/settings_provider.dart';
 
@@ -42,6 +43,7 @@ class MedNovaShell extends ConsumerWidget {
     ];
 
     final activeIndex = _activeTabIndex(tabs, navigationShell.currentIndex);
+    final palette = MedNovaPalette.of(context);
 
     return Scaffold(
       extendBody: true,
@@ -50,9 +52,18 @@ class MedNovaShell extends ConsumerWidget {
         child: Container(
           margin: EdgeInsets.fromLTRB(compact ? 8 : 12, 0, compact ? 8 : 12, compact ? 8 : 12),
           decoration: BoxDecoration(
-            gradient: AppColors.cardGradient,
+            gradient: palette.cardGradient,
             borderRadius: BorderRadius.circular(compact ? 20 : 24),
-            border: Border.all(color: AppColors.glassBorder),
+            border: Border.all(color: palette.glassBorder),
+            boxShadow: palette.isDark
+                ? null
+                : [
+                    BoxShadow(
+                      color: palette.cardShadow.withValues(alpha: 0.12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
           ),
           child: NavigationBar(
             height: compact ? 58 : 64,

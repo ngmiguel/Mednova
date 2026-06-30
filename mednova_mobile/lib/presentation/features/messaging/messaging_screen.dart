@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/animations/mednova_3d_scene.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/mednova_palette.dart';
 import '../../../data/models/messaging_models.dart';
 import '../../providers/messaging_provider.dart';
 import '../../providers/person_detail_provider.dart';
@@ -183,8 +184,13 @@ class _ChatThreadView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = MedNovaPalette.of(context);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final bottomSafe = MediaQuery.viewPaddingOf(context).bottom;
+
     return Parallax3DBackground(
       child: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             Padding(
@@ -196,10 +202,17 @@ class _ChatThreadView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(contact.fullName, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                        Text(
+                          contact.fullName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: palette.textPrimary,
+                          ),
+                        ),
                         Text(
                           opening ? 'Ouverture...' : 'Temps réel · actualisation 4s',
-                          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
+                          style: TextStyle(color: palette.textMuted, fontSize: 11),
                         ),
                       ],
                     ),
@@ -212,8 +225,11 @@ class _ChatThreadView extends StatelessWidget {
               child: opening
                   ? const MedNovaLoader(message: 'Ouverture de la conversation...')
                   : messages.isEmpty
-                      ? const Center(
-                          child: Text('Envoyez votre premier message', style: TextStyle(color: AppColors.textMuted)),
+                      ? Center(
+                          child: Text(
+                            'Envoyez votre premier message',
+                            style: TextStyle(color: palette.textMuted),
+                          ),
                         )
                       : ListView.builder(
                           controller: scrollCtrl,
@@ -231,18 +247,18 @@ class _ChatThreadView extends StatelessWidget {
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                   constraints: BoxConstraints(maxWidth: MediaQuery.sizeOf(context).width * 0.78),
                                   decoration: BoxDecoration(
-                                    gradient: mine ? AppColors.auroraGradient : AppColors.cardGradient,
+                                    color: palette.messageBubble,
                                     borderRadius: BorderRadius.only(
                                       topLeft: const Radius.circular(18),
                                       topRight: const Radius.circular(18),
                                       bottomLeft: Radius.circular(mine ? 18 : 4),
                                       bottomRight: Radius.circular(mine ? 4 : 18),
                                     ),
-                                    border: Border.all(color: AppColors.glassBorder),
+                                    border: Border.all(color: palette.messageBubbleBorder),
                                   ),
                                   child: Text(
                                     msg.content,
-                                    style: TextStyle(color: mine ? Colors.white : AppColors.textPrimary),
+                                    style: TextStyle(color: palette.messageText),
                                   ),
                                 ),
                               ),
@@ -250,17 +266,33 @@ class _ChatThreadView extends StatelessWidget {
                           },
                         ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+            Container(
+              decoration: BoxDecoration(
+                color: palette.inputBarFill,
+                border: Border(top: BorderSide(color: palette.glassBorder)),
+                boxShadow: [
+                  BoxShadow(
+                    color: palette.cardShadow.withValues(alpha: palette.isDark ? 0.08 : 0.06),
+                    blurRadius: 12,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.fromLTRB(16, 10, 16, 10 + bottomSafe + bottomInset),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Expanded(
                     child: TextField(
                       controller: draftCtrl,
+                      minLines: 1,
+                      maxLines: 4,
+                      textInputAction: TextInputAction.send,
                       decoration: InputDecoration(
                         hintText: 'Votre message...',
                         filled: true,
-                        fillColor: AppColors.glassWhite,
+                        fillColor: palette.glassFill,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
                       ),
                       onSubmitted: (_) => onSend(),
@@ -271,7 +303,11 @@ class _ChatThreadView extends StatelessWidget {
                     mini: true,
                     onPressed: sending ? null : onSend,
                     child: sending
-                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : const Icon(Icons.send),
                   ),
                 ],
