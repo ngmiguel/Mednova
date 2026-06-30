@@ -50,6 +50,37 @@ class _AiScreenState extends ConsumerState<AiScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Floating3DCard(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.auroraViolet.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.auto_awesome, color: AppColors.auroraViolet),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Déclenchement automatique', style: TextStyle(fontWeight: FontWeight.w800)),
+                      SizedBox(height: 6),
+                      Text(
+                        'L\'IA s\'active seule quand un infirmier ou un médecin enregistre les constantes vitales d\'un patient (événement VITALS_RECORDED). '
+                        'Personne ne lance l\'analyse manuellement ici — cette page sert à consulter les scores et recommandations.',
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 13, height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           if (_selectedPatientId != null) ...[
             _SelectedPatientBar(
               name: patientsAsync.maybeWhen(
@@ -191,6 +222,21 @@ class _AiScreenState extends ConsumerState<AiScreen> {
                                         ),
                                       )
                                       .toList(),
+                                ),
+                              ],
+                              if (a.triggerEventType != null) ...[
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.bolt, size: 14, color: AppColors.auroraGold),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Déclenché par : ${a.triggerEventType}',
+                                        style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                               const SizedBox(height: 8),
