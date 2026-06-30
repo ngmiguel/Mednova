@@ -61,17 +61,29 @@ class AuditEventModel {
     required this.eventType,
     required this.source,
     required this.receivedAt,
+    this.correlationId,
+    this.payload,
+    this.summary,
+    this.actorLabel,
   });
 
   factory AuditEventModel.fromJson(Map<String, dynamic> json) => AuditEventModel(
-        eventId: json['eventId'] as String,
+        eventId: json['eventId'] as String? ?? json['id']?.toString() ?? '',
         eventType: json['eventType'] as String,
         source: json['source'] as String,
         receivedAt: json['receivedAt'] as String,
+        correlationId: json['correlationId'] as String?,
+        payload: json['payload'] as String?,
+        summary: json['summary'] as String?,
+        actorLabel: json['actorLabel'] as String?,
       );
 
   final String eventId;
   final String eventType;
   final String source;
   final String receivedAt;
+  final String? correlationId;
+  final String? payload;
+  final String? summary;
+  final String? actorLabel;
 }

@@ -104,6 +104,8 @@ class RiskAssessmentModel {
     required this.factors,
     required this.recommendation,
     required this.assessedAt,
+    this.triggerEventType,
+    this.correlationId,
   });
 
   factory RiskAssessmentModel.fromJson(Map<String, dynamic> json) =>
@@ -115,6 +117,8 @@ class RiskAssessmentModel {
         factors: (json['factors'] as List<dynamic>?)?.cast<String>() ?? [],
         recommendation: json['recommendation'] as String? ?? '',
         assessedAt: json['assessedAt'] as String,
+        triggerEventType: json['triggerEventType'] as String?,
+        correlationId: json['correlationId'] as String?,
       );
 
   final String id;
@@ -124,6 +128,8 @@ class RiskAssessmentModel {
   final List<String> factors;
   final String recommendation;
   final String assessedAt;
+  final String? triggerEventType;
+  final String? correlationId;
 }
 
 class NotificationModel {
@@ -159,21 +165,42 @@ class AppointmentModel {
     required this.id,
     required this.scheduledAt,
     required this.status,
+    this.patientId,
+    this.doctorId,
+    this.patientUserId,
+    this.doctorUserId,
     this.reason,
+    this.notes,
     this.durationMinutes = 30,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) => AppointmentModel(
         id: json['id'] as String,
         scheduledAt: json['scheduledAt'] as String,
         status: json['status'] as String,
+        patientId: json['patientId'] as String?,
+        doctorId: json['doctorId'] as String?,
+        patientUserId: json['patientUserId'] as String?,
+        doctorUserId: json['doctorUserId'] as String?,
         reason: json['reason'] as String?,
+        notes: json['notes'] as String?,
         durationMinutes: json['durationMinutes'] as int? ?? 30,
+        createdAt: json['createdAt'] as String?,
+        updatedAt: json['updatedAt'] as String?,
       );
 
   final String id;
   final String scheduledAt;
   final String status;
+  final String? patientId;
+  final String? doctorId;
+  final String? patientUserId;
+  final String? doctorUserId;
   final String? reason;
+  final String? notes;
   final int durationMinutes;
+  final String? createdAt;
+  final String? updatedAt;
 }
