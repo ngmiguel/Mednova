@@ -58,6 +58,10 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'ai.refresh': 'Actualiser',
     'ai.empty': 'Aucune évaluation pour ce patient',
     'ai.emptyHint': 'Les scores sont générés automatiquement lors de l’enregistrement des constantes vitales.',
+    'ai.triggerBannerTitle': 'Déclenchement automatique',
+    'ai.triggerBannerText':
+      'L’IA s’active seule quand un infirmier ou un médecin enregistre les constantes vitales d’un patient (événement VITALS_RECORDED). Personne ne lance l’analyse manuellement — cette page sert à consulter les scores.',
+    'ai.triggerBy': 'Déclenché par',
     'ai.emptyFilter': 'Aucune évaluation ne correspond à ce filtre',
     'ai.filter.all': 'Tous',
     'ai.filter.alert': 'Alertes',
@@ -212,6 +216,10 @@ export const TRANSLATIONS: Record<Lang, Record<string, string>> = {
     'ai.refresh': 'Refresh',
     'ai.empty': 'No assessments for this patient',
     'ai.emptyHint': 'Scores are generated automatically when vitals are recorded.',
+    'ai.triggerBannerTitle': 'Automatic trigger',
+    'ai.triggerBannerText':
+      'AI runs automatically when a nurse or doctor records a patient’s vitals (VITALS_RECORDED event). No one starts the analysis manually here — this page is for reviewing scores.',
+    'ai.triggerBy': 'Triggered by',
     'ai.emptyFilter': 'No assessments match this filter',
     'ai.filter.all': 'All',
     'ai.filter.alert': 'Alerts',

@@ -90,7 +90,14 @@
   } @else {
     <div class="timeline">
       @for (a of filtered(); track a.id; let i = $index) {
-        <article class="timeline-card animate-fade-up" [style.animation-delay]="i * 0.06 + 's'">
+        <article
+          class="timeline-card animate-fade-up clickable"
+          [style.animation-delay]="i * 0.06 + 's'"
+          (click)="openDetail(a)"
+          (keydown.enter)="openDetail(a)"
+          tabindex="0"
+          role="button"
+        >
           <div class="timeline-date">
             <span class="day">{{ a.scheduledAt | date: 'dd' }}</span>
             <span class="month">{{ a.scheduledAt | date: 'MMM' }}</span>
@@ -99,6 +106,17 @@
             <div class="timeline-header">
               <h3>{{ a.reason ?? 'Consultation' }}</h3>
               <span [class]="statusOf(a.status).class">{{ statusOf(a.status).label }}</span>
+            </div>
+            <div class="participants">
+              <span class="participant patient">
+                <app-icon name="user" [size]="14" />
+                {{ patientName(a.patientId) }}
+              </span>
+              <span class="participant-arrow">→</span>
+              <span class="participant doctor">
+                <app-icon name="doctors" [size]="14" />
+                {{ doctorName(a.doctorId) }}
+              </span>
             </div>
             <p class="timeline-time">
               <app-icon name="clock" [size]="14" />
@@ -110,7 +128,8 @@
                 {{ a.notes }}
               </p>
             }
-            <div class="card-actions">
+            <p class="detail-hint">Cliquer pour voir le détail complet</p>
+            <div class="card-actions" (click)="$event.stopPropagation()">
               @if (a.status === 'SCHEDULED') {
                 <button type="button" class="btn-sm" (click)="confirm(a.id)">{{ 'appointments.confirm' | t }}</button>
                 <button type="button" class="btn-sm danger" (click)="cancel(a.id)">{{ 'appointments.cancel' | t }}</button>
@@ -119,6 +138,42 @@
           </div>
         </article>
       }
+    </div>
+  }
+
+  @if (selectedAppointment(); as detail) {
+    <div class="detail-overlay" (click)="closeDetail()">
+      <div class="detail-panel" (click)="$event.stopPropagation()">
+        <header>
+          <h2>{{ detail.reason ?? 'Consultation' }}</h2>
+          <button type="button" class="btn-ghost" (click)="closeDetail()">Fermer</button>
+        </header>
+        <p><span [class]="statusOf(detail.status).class">{{ statusOf(detail.status).label }}</span></p>
+        <dl class="detail-grid">
+          <dt>Patient</dt>
+          <dd>{{ patientName(detail.patientId) }}</dd>
+          <dt>Médecin</dt>
+          <dd>{{ doctorName(detail.doctorId) }}</dd>
+          <dt>Date & heure</dt>
+          <dd>{{ detail.scheduledAt | date: 'EEEE d MMMM yyyy à HH:mm' }}</dd>
+          <dt>Durée</dt>
+          <dd>{{ detail.durationMinutes }} minutes</dd>
+          @if (detail.notes) {
+            <dt>Notes</dt>
+            <dd>{{ detail.notes }}</dd>
+          }
+          <dt>Identifiant</dt>
+          <dd><code>{{ detail.id }}</code></dd>
+          @if (detail.createdAt) {
+            <dt>Créé le</dt>
+            <dd>{{ detail.createdAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          }
+          @if (detail.updatedAt) {
+            <dt>Mis à jour</dt>
+            <dd>{{ detail.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</dd>
+          }
+        </dl>
+      </div>
     </div>
   }
 </div>

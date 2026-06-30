@@ -13,11 +13,17 @@ import { AppIconComponent } from '../../../shared/components/app-icon/app-icon.c
 
 interface AppointmentSummary {
   id: string;
+  patientId?: string;
+  doctorId?: string;
+  patientUserId?: string;
+  doctorUserId?: string;
   scheduledAt: string;
   durationMinutes: number;
   status: string;
   reason?: string;
   notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface PersonOption {
@@ -50,6 +56,7 @@ export class AppointmentListComponent implements OnInit {
   readonly statusFilter = signal<string | null>(null);
   readonly showForm = signal(false);
   readonly saving = signal(false);
+  readonly selectedAppointment = signal<AppointmentSummary | null>(null);
 
   form = {
     patientId: '',
@@ -73,9 +80,7 @@ export class AppointmentListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAppointments();
-    if (this.canBook()) {
-      this.loadPeople();
-    }
+    this.loadPeople();
   }
 
   loadAppointments(): void {
@@ -93,7 +98,7 @@ export class AppointmentListComponent implements OnInit {
 
   loadPeople(): void {
     const get = <T>(url: string) => this.http.get<ApiResponse<PageResponse<T>>>(url);
-    if (this.tokenStorage.hasRole('ROLE_PATIENT')) {
+    if (this.tokenStorage.hasRole('ROLE_PATIENT') && this.canBook()) {
       const user = this.authService.currentUser();
       if (user) {
         this.setPatientSelf(user.id);
@@ -105,7 +110,7 @@ export class AppointmentListComponent implements OnInit {
           },
         });
       }
-    } else {
+    } else if (!this.tokenStorage.hasRole('ROLE_PATIENT')) {
       get<PersonOption>(`${environment.apiBaseUrl}/patients?size=50`).subscribe({
         next: (res) => this.patients.set(res.data?.content ?? []),
       });
@@ -179,6 +184,26 @@ export class AppointmentListComponent implements OnInit {
       CANCELLED: { label: 'Annulé', class: 'badge-danger' },
     };
     return map[status] ?? { label: status, class: 'badge-neutral' };
+  }
+
+  patientName(id?: string): string {
+    if (!id) return 'Patient non renseigné';
+    const p = this.patients().find((x) => x.id === id);
+    return p ? `${p.firstName} ${p.lastName}` : `Patient ${id.slice(0, 8)}…`;
+  }
+
+  doctorName(id?: string): string {
+    if (!id) return 'Médecin non renseigné';
+    const d = this.doctors().find((x) => x.id === id);
+    return d ? `Dr. ${d.firstName} ${d.lastName}` : `Médecin ${id.slice(0, 8)}…`;
+  }
+
+  openDetail(appointment: AppointmentSummary): void {
+    this.selectedAppointment.set(appointment);
+  }
+
+  closeDetail(): void {
+    this.selectedAppointment.set(null);
   }
 
   private setPatientSelf(userId: string): void {

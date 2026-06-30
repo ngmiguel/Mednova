@@ -195,6 +195,10 @@
   </div>
 
   <div class="actions-bar animate-fade-up">
+    <button type="button" class="btn-danger-outline" (click)="logout()">
+      <app-icon name="logout" [size]="16" />
+      Déconnexion
+    </button>
     <button type="button" class="btn-secondary" (click)="reset()">Réinitialiser</button>
     <button type="button" class="btn-primary" (click)="save()">Enregistrer les paramètres</button>
   </div>

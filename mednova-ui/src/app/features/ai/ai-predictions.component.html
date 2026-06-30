@@ -38,6 +38,16 @@
 
 
 
+  <section class="trigger-banner animate-fade-up">
+    <app-icon name="ai" [size]="22" />
+    <div>
+      <strong>{{ 'ai.triggerBannerTitle' | t }}</strong>
+      <p>{{ 'ai.triggerBannerText' | t }}</p>
+    </div>
+  </section>
+
+
+
   @if (isStaff()) {
 
     <section class="toolbar animate-fade-up">
@@ -375,7 +385,7 @@
 
               @if (a.triggerEventType) {
 
-                <span class="trigger">{{ a.triggerEventType }}</span>
+                <span class="trigger">{{ 'ai.triggerBy' | t }} : {{ a.triggerEventType }}</span>
 
               }
 

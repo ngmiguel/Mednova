@@ -25,18 +25,60 @@
   } @else {
     <div class="audit-list">
       @for (e of events(); track e.eventId; let i = $index) {
-        <article class="audit-card animate-fade-up" [style.animation-delay]="i * 0.04 + 's'">
+        <article
+          class="audit-card animate-fade-up clickable"
+          [style.animation-delay]="i * 0.04 + 's'"
+          (click)="openDetail(e)"
+          tabindex="0"
+          role="button"
+        >
           <div class="audit-icon"><app-icon [name]="eventIcon(e.eventType)" [size]="20" /></div>
           <div class="audit-content">
             <div class="audit-header">
-              <span class="badge-info">{{ e.eventType }}</span>
+              <span class="badge-info">{{ eventLabel(e.eventType) }}</span>
               <span class="audit-source">{{ e.source }}</span>
+            </div>
+            <p class="audit-type-code">{{ e.eventType }}</p>
+            <div class="audit-meta">
+              @if (e.correlationId) {
+                <span>Correlation : <code>{{ e.correlationId }}</code></span>
+              }
+              @if (actorFromPayload(e); as actor) {
+                <span>Acteur : {{ actor }}</span>
+              }
             </div>
             <p class="audit-time">{{ e.receivedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</p>
             <code class="audit-id">{{ e.eventId }}</code>
           </div>
         </article>
       }
+    </div>
+  }
+
+  @if (selectedEvent(); as detail) {
+    <div class="detail-overlay" (click)="closeDetail()">
+      <div class="detail-panel" (click)="$event.stopPropagation()">
+        <header>
+          <h2>{{ eventLabel(detail.eventType) }}</h2>
+          <button type="button" class="btn-ghost" (click)="closeDetail()">Fermer</button>
+        </header>
+        <dl class="detail-grid">
+          <dt>Type</dt>
+          <dd><code>{{ detail.eventType }}</code></dd>
+          <dt>Service</dt>
+          <dd>{{ detail.source }}</dd>
+          <dt>ID événement</dt>
+          <dd><code>{{ detail.eventId }}</code></dd>
+          @if (detail.correlationId) {
+            <dt>Correlation ID</dt>
+            <dd><code>{{ detail.correlationId }}</code></dd>
+          }
+          <dt>Reçu le</dt>
+          <dd>{{ detail.receivedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</dd>
+          <dt>Payload</dt>
+          <dd><pre class="payload-block">{{ prettyPayload(detail.payload) }}</pre></dd>
+        </dl>
+      </div>
     </div>
   }
 </div>

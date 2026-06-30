@@ -23,6 +23,29 @@
   }
 }
 
+.trigger-banner {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: rgba(99, 102, 241, 0.08);
+
+  strong {
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+}
+
 .btn-refresh,
 .btn-retry {
   display: inline-flex;
