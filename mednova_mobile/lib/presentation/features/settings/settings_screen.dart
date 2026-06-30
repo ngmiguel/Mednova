@@ -39,6 +39,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.read(settingsProvider.notifier).update(next, userEmail: email);
   }
 
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Se déconnecter ?'),
+        content: const Text('Votre session sera fermée sur cet appareil.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Déconnexion', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    await ref.read(authProvider.notifier).logout();
+    if (!mounted) return;
+    context.go('/login');
+  }
+
+  static String _initials(String? first, String? last) {
+    final a = (first != null && first.isNotEmpty) ? first[0].toUpperCase() : '';
+    final b = (last != null && last.isNotEmpty) ? last[0].toUpperCase() : '';
+    final combined = '$a$b';
+    return combined.isEmpty ? '?' : combined;
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider).valueOrNull;
@@ -73,7 +101,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   radius: 32,
                   backgroundColor: AppColors.auroraTeal.withValues(alpha: 0.2),
                   child: Text(
-                    user?.firstName[0] ?? '?',
+                    _initials(user?.firstName, user?.lastName),
                     style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
                   ),
                 ),
@@ -163,6 +191,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsSection(
             title: strings.sessionSecurity,
             icon: Icons.lock_outline,
+            initiallyExpanded: true,
             child: Column(
               children: [
                 _toggle(strings.staySignedIn, settings.staySignedIn, (v) {
@@ -171,6 +200,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _toggle(strings.rememberEmail, settings.rememberEmail, (v) {
                   _apply(settings.copyWith(rememberEmail: v));
                 }),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.danger.withValues(alpha: 0.18),
+                      foregroundColor: AppColors.danger,
+                      side: const BorderSide(color: AppColors.danger),
+                    ),
+                    onPressed: _logout,
+                    icon: const Icon(Icons.logout),
+                    label: Text(strings.logout),
+                  ),
+                ),
               ],
             ),
           ),
@@ -293,39 +337,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.danger.withValues(alpha: 0.18),
-                foregroundColor: AppColors.danger,
-                side: const BorderSide(color: AppColors.danger),
-              ),
-              onPressed: () async {
-                final confirm = await showDialog<bool>(
-                  context: context,
-                  builder: (ctx) => AlertDialog(
-                    title: const Text('Se déconnecter ?'),
-                    content: const Text('Votre session sera fermée sur cet appareil.'),
-                    actions: [
-                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-                      TextButton(
-                        onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('Déconnexion', style: TextStyle(color: AppColors.danger)),
-                      ),
-                    ],
-                  ),
-                );
-                if (confirm != true || !context.mounted) return;
-                await ref.read(authProvider.notifier).logout();
-                if (context.mounted) context.go('/login');
-              },
-              icon: const Icon(Icons.logout),
-              label: Text(strings.logout),
-            ),
-          ),
-          const SizedBox(height: 12),
           OutlinedButton.icon(
             onPressed: () => ref.read(settingsProvider.notifier).reset(userEmail: user?.email),
             icon: const Icon(Icons.restart_alt),
@@ -376,7 +387,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _staffChip(BuildContext context, UserAccountModel nurse) {
     return ActionChip(
-      avatar: CircleAvatar(child: Text(nurse.firstName[0])),
+      avatar: CircleAvatar(child: Text(_initials(nurse.firstName, nurse.lastName))),
       label: Text('${nurse.firstName} ${nurse.lastName}'),
       onPressed: () => showPersonDetailSheet(
         context,
