@@ -80,6 +80,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             child: Column(
               children: [
                 const SizedBox(height: 20),
+                Image.asset(
+                  'assets/images/logo.png',
+                  width: 88,
+                  height: 88,
+                ).animate().fadeIn().scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack),
+                const SizedBox(height: 12),
                 Stack(
                   alignment: Alignment.center,
                   children: [

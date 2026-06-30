@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none" role="img" aria-label="MedNova AI">
+  <defs>
+    <radialGradient id="orb-core" cx="34%" cy="28%" r="68%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="38%" stop-color="#14b8a6"/>
+      <stop offset="72%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#0a0f1e" stop-opacity="0.35"/>
+    </radialGradient>
+    <radialGradient id="orb-shine" cx="28%" cy="22%" r="42%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.62"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="orbit" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ec4899"/>
+      <stop offset="0.45" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="18" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <circle cx="256" cy="256" r="210" fill="#14b8a6" fill-opacity="0.12" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="188" fill="url(#orb-core)"/>
+  <circle cx="256" cy="256" r="188" fill="url(#orb-shine)"/>
+  <ellipse cx="256" cy="256" rx="248" ry="72" stroke="#ffffff" stroke-opacity="0.14" stroke-width="2.5"/>
+  <ellipse cx="256" cy="256" rx="248" ry="120" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5" transform="rotate(28 256 256)"/>
+  <circle cx="256" cy="256" r="208" fill="none" stroke="url(#orbit)" stroke-width="7" stroke-linecap="round" stroke-dasharray="780 520" transform="rotate(-24 256 256)"/>
+  <path d="M168 256 H214 L232 206 L256 302 L280 224 L298 256 H344" stroke="#ffffff" stroke-opacity="0.45" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
